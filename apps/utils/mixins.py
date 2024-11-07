@@ -179,6 +179,8 @@ class CustomListModelMixin(ListModelMixin):
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter(name="query", in_=openapi.IN_QUERY, description="定制返回数据",
                           type=openapi.TYPE_STRING, required=False),
+        openapi.Parameter(name="with_children", in_=openapi.IN_QUERY, description="带有children(yes/no/count)",
+                          type=openapi.TYPE_STRING, required=False),
     ])
     def list(self, request, *args, **kwargs):
         """

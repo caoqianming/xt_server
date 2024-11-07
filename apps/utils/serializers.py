@@ -19,7 +19,30 @@ class GenSignatureSerializer(serializers.Serializer):
     path = serializers.CharField(label="图片地址")
 
 
-class CustomModelSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class TreeSerializerMixin:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request', None)
+        self.with_children = request.query_params.get('with_children', 'no') if request else 'no'
+        if self.with_children in ['yes', 'count']:
+            if 'children' not in self.fields:
+                self.fields['children'] = serializers.SerializerMethodField()
+            if 'children_count' not in self.fields:
+                self.fields['children_count'] = serializers.SerializerMethodField()
+
+    def get_children(self, obj):
+        if hasattr(obj, 'parent') and self.with_children == 'yes':
+            serializer_class = self.__class__
+            return serializer_class(obj.__class__.objects.filter(parent=obj), many=True, context=self.context).data
+        return []
+    
+    def get_children_count(self, obj):
+        if hasattr(obj, 'parent') and self.with_children in ['yes', 'count']:
+            return obj.__class__.objects.filter(parent=obj).count()
+        return 0
+
+class CustomModelSerializer(DynamicFieldsMixin, TreeSerializerMixin, serializers.ModelSerializer):
     """
     自定义serializer/包含创建和新增字段处理
     """
