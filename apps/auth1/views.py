@@ -26,6 +26,7 @@ from apps.auth1.serializers import (CodeLoginSerializer, LoginSerializer,
                                     PwResetSerializer, SecretLoginSerializer, SendCodeSerializer, WxCodeSerializer)
 from apps.system.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
+from apps.auth1.authentication import get_user_by_username_or
 
 # Create your views here.
 
@@ -56,8 +57,14 @@ class TokenLoginView(CreateAPIView):
         is_ok = validate_password(vdata.get('password'))
         if is_ok is False and password_check:
             raise ParseError('密码校验失败, 请更换登录方式并修改密码')
+        
+        user, _ = get_user_by_username_or(vdata.get('username'))
+        if user and cache.get(f"login_attempt_{user.id}", 0) > 3:
+                raise ParseError("登录失败次数过多,请稍后再试")
+        
         user = authenticate(username=vdata.get('username'),
                             password=vdata.get('password'))
+        
         if user is not None:
             token_dict = get_tokens_for_user(user)
             token_dict['password_ok'] = is_ok
