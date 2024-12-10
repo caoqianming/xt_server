@@ -199,6 +199,7 @@ REST_FRAMEWORK = {
 }
 # session配置
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+CSRF_COOKIE_NAME = 'csrftoken'
 
 # simplejwt配置
 SIMPLE_JWT = {
