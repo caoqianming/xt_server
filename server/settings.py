@@ -197,6 +197,9 @@ REST_FRAMEWORK = {
         'user': '200/second'
     }
 }
+# session配置
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
 # simplejwt配置
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
