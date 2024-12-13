@@ -30,6 +30,13 @@ class Permission(ParentModel, BaseModel):
         '类型', choices=menu_type_choices, default=30)
     sort = models.PositiveSmallIntegerField('排序标记', default=1)
     codes = models.JSONField('权限标识', default=list, null=True, blank=True)
+    
+    route_name = models.CharField('路由名称', max_length=30, null=True, blank=True)
+    icon = models.CharField('图标', max_length=30, null=True, blank=True)
+    path = models.CharField('路由', max_length=100, null=True, blank=True)
+    component = models.CharField('组件', max_length=100, null=True, blank=True)
+    is_hidden = models.BooleanField('是否隐藏', default=False)
+    is_fullpage = models.BooleanField('是否全屏', default=False)
 
     def __str__(self):
         return self.name

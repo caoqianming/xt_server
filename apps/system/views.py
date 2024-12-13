@@ -21,7 +21,7 @@ from apps.system.filters import DeptFilterSet, UserFilterSet
 # from django_q.models import Task as QTask, Schedule as QSchedule
 from apps.utils.mixins import (CustomCreateModelMixin, MyLoggingMixin)
 from django.conf import settings
-from apps.utils.permission import ALL_PERMS, get_user_perms_map
+from apps.utils.permission import ALL_PERMS
 from apps.utils.viewsets import CustomGenericViewSet, CustomModelViewSet
 from server.celery import app as celery_app
 from .models import (Dept, Dictionary, DictType, File, Permission, Post, PostRole, Role, User,
@@ -34,7 +34,8 @@ from .serializers import (ApkSerializer, DeptCreateUpdateSerializer, DeptSeriali
                           PTaskSerializer, PTaskCreateUpdateSerializer, PTaskResultSerializer,
                           RoleCreateUpdateSerializer, RoleSerializer, TaskRunSerializer,
                           UserCreateSerializer, UserListSerializer, UserPostCreateSerializer,
-                          UserPostSerializer, UserUpdateSerializer, MyScheduleCreateSerializer, MyScheduleSerializer)
+                          UserPostSerializer, UserUpdateSerializer, UserFullInfoSerializer,
+                          MyScheduleCreateSerializer, MyScheduleSerializer)
 from rest_framework.viewsets import GenericViewSet
 from cron_descriptor import get_description
 import locale
@@ -491,24 +492,7 @@ class UserViewSet(CustomModelViewSet):
         获取登录用户信息
         """
         user = request.user
-        perms = get_user_perms_map(user, update_cache=True)
-        data = {
-            'id': user.id,
-            'username': user.username,
-            'type': user.type,
-            'name': user.name,
-            'roles': user.roles.values_list('name', flat=True),
-            'avatar': user.avatar,
-            'perms': perms,
-            'belong_dept': user.belong_dept.id if user.belong_dept else None,
-            'post': user.post.id if user.post else None,
-            'belong_dept_name': user.belong_dept.name if user.belong_dept else '',
-            'post_name': user.post.name if user.post else '',
-            'is_superuser': user.is_superuser,
-            'wxmp_openid': user.wxmp_openid,
-            'wx_openid': user.wx_openid
-        }
-        return Response(data)
+        return Response(UserFullInfoSerializer(user).data)
 
     @action(methods=['post'], detail=False, permission_classes=[IsAuthenticated])
     def bind_wxmp(self, request, pk=None):
