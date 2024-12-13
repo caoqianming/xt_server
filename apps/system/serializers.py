@@ -14,6 +14,7 @@ from django.db import transaction
 from rest_framework.validators import UniqueValidator
 from django.conf import settings
 from django.db.models import Q
+from apps.utils.permission import get_user_perms_map
 # from django_q.models import Task as QTask, Schedule as QSchedule
 
 
@@ -331,6 +332,23 @@ class UserUpdateSerializer(CustomModelSerializer):
             raise ParseError(**USERNAME_EXIST)
         return super().update(instance, validated_data)
 
+
+class UserFullInfoSerializer(CustomModelSerializer):
+    """
+    用户信息序列化
+    """
+    perms = serializers.SerializerMethodField()
+    belong_dept_name = serializers.CharField(source="belong_dept.name", read_only=True)
+    post_name = serializers.CharField(source="post.name", read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'type', 'name', 'avatar', 'belong_dept', 
+                  'belong_dept_name', 'post', 'post_name', 'perms',
+                  'is_superuser', 'wxmp_openid', 'wx_openid']
+    
+    def get_perms(self, obj):
+        return get_user_perms_map(obj, update_cache=True)
 
 class UserCreateSerializer(CustomModelSerializer):
     """
