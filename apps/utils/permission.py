@@ -28,7 +28,8 @@ def get_user_route(user: User) -> List[str]:
     获取用户PC前端路由
     """
     perm_qs = Permission.objects.filter(
-        type__in=[Permission.PERM_TYPE_MODULE, Permission.PERM_TYPE_PAGE]).exclude(Q(path=None) | Q(path=''))
+        type__in=[Permission.PERM_TYPE_MODULE, Permission.PERM_TYPE_PAGE]).exclude(
+            Q(path=None) | Q(path='')| Q(route_name=None)|Q(route_name=''))
     user_routes_qs = None
     if user.is_superuser:
         user_routes_qs = perm_qs
