@@ -222,6 +222,18 @@ class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
         fields = '__all__'
+    
+    def validate(self, attrs):
+        type = attrs["type"]
+        if type in [Permission.PERM_TYPE_MODULE, Permission.PERM_TYPE_API]:
+            attrs.pop("component", None)
+            attrs.pop("is_hidden", None)
+            attrs.pop("is_fullpage", None)
+            if type == Permission.PERM_TYPE_API:
+                attrs.pop("route_name", None)
+                attrs.pop("icon", None)
+                attrs.pop("path", None)
+        return super().validate(attrs)
 
 
 class PermissionCreateUpdateSerializer(serializers.ModelSerializer):

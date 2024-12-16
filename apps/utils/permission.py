@@ -4,6 +4,7 @@ from apps.utils.queryset import get_child_queryset2
 from apps.system.models import DataFilter, Dept, Permission, PostRole, UserPost, User
 from django.db.models.query import QuerySet
 from typing import List
+from apps.utils.tools import build_tree_from_list
 
 # 后端代码里有的权限标识
 ALL_PERMS = [
@@ -20,6 +21,40 @@ def get_alld_perms(update_cache=False) -> List[str]:
         perms_alld_list.sort()
         cache.set(key, perms_alld_list, timeout=60*5)
     return perms_alld_list
+
+def get_user_route(user: User) -> List[str]:
+    """
+    获取用户PC前端路由
+    """
+    perm_qs = Permission.objects.filter(type__in=[Permission.PERM_TYPE_MODULE, Permission.PERM_TYPE_PAGE])
+    user_routes_qs = None
+    if user.is_superuser:
+        user_routes_qs = perm_qs
+    else:
+       user_routes_qs = perm_qs.filter(role_perms__in=PostRole.objects.filter(
+           post__in=UserPost.objects.filter(user=user).values_list("post", flat=True)).values_list("role", flat=True))
+    user_routes_qs = user_routes_qs.order_by('sort')
+    user_routes_list = list(user_routes_qs.values("id", "name", "type", "route_name", "icon", "path", "component", "is_hidden", "is_fullpage", "parent"))
+    for item in user_routes_list:
+        item["meta"] = {}
+        item["meta"]["title"] = item["name"]
+        item.pop("name")
+        item["meta"]["icon"] = item["icon"]
+        item.pop("icon")
+        if item["type"] == Permission.PERM_TYPE_MODULE:
+            item["meta"]["type"] = "menu"
+            item.pop("component", None)
+        item.pop("type")
+        item["meta"]["hidden"] = item["is_hidden"]
+        item.pop("is_hidden")
+        item["meta"]["fullpage"] = item["is_fullpage"]
+        item.pop("is_fullpage")
+        item["name"] = item["route_name"]
+        item.pop("route_name")
+    return build_tree_from_list(user_routes_list)
+
+    
+    
 
 def get_user_perms_map(user, update_cache=False):
     """

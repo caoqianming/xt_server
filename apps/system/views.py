@@ -43,6 +43,7 @@ from drf_yasg.utils import swagger_auto_schema
 from server.settings import get_sysconfig, update_sysconfig, update_dict
 from apps.utils.constants import DEFAULT_PWD
 from django.core.cache import cache
+from apps.utils.permission import get_user_route
 
 # logger.info('请求成功！ response_code:{}；response_headers:{}；
 # response_body:{}'.format(response_code, response_headers, response_body[:251]))
@@ -493,6 +494,14 @@ class UserViewSet(CustomModelViewSet):
         """
         user = request.user
         return Response(UserFullInfoSerializer(user).data)
+    
+    @action(methods=['get'], detail=False, permission_classes=[IsAuthenticated])
+    def route(self, request, pk=None):
+        """登录用户路由
+
+        获取登录用户路由
+        """
+        return Response(get_user_route(request.user))
 
     @action(methods=['post'], detail=False, permission_classes=[IsAuthenticated])
     def bind_wxmp(self, request, pk=None):

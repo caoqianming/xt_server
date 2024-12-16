@@ -288,3 +288,21 @@ def compare_values(val1, val2, ignore_order=False):
         return compare_dicts(val1, val2, ignore_order)
     else:
         return val1 == val2
+
+
+def build_tree_from_list(data, parent_field="parent"):
+    id_map = {item["id"]: item for item in data}
+    tree = []
+
+    for item in data:
+        parent_id = item.get(parent_field, None)
+        if parent_id is None:
+            tree.append(item)
+        else:
+            parent = id_map.get(parent_id, None)
+            if parent:
+                parent.setdefault("children", []).append(item)
+            else:
+                tree.append(item)
+
+    return tree
