@@ -5,6 +5,7 @@ from apps.system.models import DataFilter, Dept, Permission, PostRole, UserPost,
 from django.db.models.query import QuerySet
 from typing import List
 from apps.utils.tools import build_tree_from_list
+from django.db.models import Q
 
 # 后端代码里有的权限标识
 ALL_PERMS = [
@@ -26,7 +27,8 @@ def get_user_route(user: User) -> List[str]:
     """
     获取用户PC前端路由
     """
-    perm_qs = Permission.objects.filter(type__in=[Permission.PERM_TYPE_MODULE, Permission.PERM_TYPE_PAGE])
+    perm_qs = Permission.objects.filter(
+        type__in=[Permission.PERM_TYPE_MODULE, Permission.PERM_TYPE_PAGE]).exclude(Q(path=None) | Q(path=''))
     user_routes_qs = None
     if user.is_superuser:
         user_routes_qs = perm_qs
