@@ -183,11 +183,7 @@ class CustomListModelMixin(ListModelMixin):
                           type=openapi.TYPE_STRING, required=False),
     ])
     def list(self, request, *args, **kwargs):
-        """
-        获取列表
 
-        获取列表
-        """
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
