@@ -111,6 +111,14 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+    @classmethod
+    def safe_get_or_create(cls, **kwargs):
+        defaults = kwargs.pop('defaults', {})
+        try:
+            return cls.objects.get_or_create(defaults=defaults, **kwargs)
+        except IntegrityError:
+            return cls.objects.get(**kwargs), False
+        
     def handle_parent(self):
         pass
 
