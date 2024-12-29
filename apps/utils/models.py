@@ -114,10 +114,14 @@ class BaseModel(models.Model):
     @classmethod
     def safe_get_or_create(cls, **kwargs):
         defaults = kwargs.pop('defaults', {})
-        try:
-            return cls.objects.get_or_create(defaults=defaults, **kwargs)
-        except IntegrityError:
-            return cls.objects.get(**kwargs), False
+        for attempt in range(5):
+            try:
+                return cls.objects.get_or_create(defaults=defaults, **kwargs)
+            except IntegrityError:
+                if attempt < 4:
+                    time.sleep(0.1)
+                else:
+                    raise
         
     def handle_parent(self):
         pass
