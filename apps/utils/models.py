@@ -112,15 +112,21 @@ class BaseModel(models.Model):
         abstract = True
 
     @classmethod
-    def safe_get_or_create(cls, **kwargs):
-        defaults = kwargs.pop('defaults', {})
-        for attempt in range(5):
+    def safe_get_or_create(cls, defaults=None, **kwargs):
+        defaults = defaults or {}
+        
+        with transaction.atomic():
             try:
-                return cls.objects.get_or_create(defaults=defaults, **kwargs)
-            except IntegrityError:
-                if attempt < 4:
-                    time.sleep(0.1)
-                else:
+                ins = cls.objects.select_for_update().get(**kwargs)
+                return ins, False
+            except cls.DoesNotExist:
+                try:
+                    ins = cls.objects.create(**defaults, **kwargs)
+                except IntegrityError:
+                    try:
+                        return cls.objects.get(**kwargs), False
+                    except cls.DoesNotExist:
+                        pass
                     raise
         
     def handle_parent(self):
