@@ -121,14 +121,14 @@ class BaseModel(models.Model):
                 return ins, False
             except cls.DoesNotExist:
                 try:
-                    ins = cls.objects.create(**defaults, **kwargs)
+                    params = {**defaults, **kwargs}
+                    return cls.objects.create(**params), True
                 except IntegrityError:
                     try:
                         return cls.objects.get(**kwargs), False
                     except cls.DoesNotExist:
                         pass
                     raise
-                return ins, True
         
     def handle_parent(self):
         pass
