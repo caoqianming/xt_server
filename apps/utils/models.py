@@ -114,7 +114,7 @@ class BaseModel(models.Model):
     @classmethod
     def safe_get_or_create(cls, defaults=None, **kwargs):
         defaults = defaults or {}
-        
+
         with transaction.atomic():
             try:
                 ins = cls.objects.select_for_update().get(**kwargs)
@@ -128,6 +128,7 @@ class BaseModel(models.Model):
                     except cls.DoesNotExist:
                         pass
                     raise
+                return ins, True
         
     def handle_parent(self):
         pass
