@@ -7,6 +7,8 @@ from apps.utils.snowflake import idWorker
 from django.db import IntegrityError
 from django.db import transaction
 from rest_framework.exceptions import ParseError
+from django.core.cache import cache
+import hashlib
 
 # 自定义软删除查询基类
 
@@ -114,20 +116,12 @@ class BaseModel(models.Model):
     @classmethod
     def safe_get_or_create(cls, defaults=None, **kwargs):
         defaults = defaults or {}
-
-        with transaction.atomic():
-            try:
-                ins = cls.objects.select_for_update().get(**kwargs)
-                return ins, False
-            except cls.DoesNotExist:
-                try:
-                    params = {**defaults, **kwargs}
-                    return cls.objects.create(**params), True
-                except IntegrityError:
-                    try:
-                        return cls.objects.get(**kwargs), False
-                    except cls.DoesNotExist:
-                        raise
+        lock_data = {**kwargs, **defaults}
+        lock_hash = hashlib.md5(str(lock_data).encode()).hexdigest()
+        lock_key = f"safe_get_or_create:{cls.__name__}:{lock_hash}"
+        with cache.lock(lock_key, timeout=10):
+            return cls.objects.get_or_create(**kwargs, defaults=defaults)
+        
         
     def handle_parent(self):
         pass
