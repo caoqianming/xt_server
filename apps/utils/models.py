@@ -127,8 +127,7 @@ class BaseModel(models.Model):
                     try:
                         return cls.objects.get(**kwargs), False
                     except cls.DoesNotExist:
-                        pass
-                    raise
+                        raise
         
     def handle_parent(self):
         pass
