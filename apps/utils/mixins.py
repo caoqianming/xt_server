@@ -1,5 +1,5 @@
 import uuid
-from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyModelMixin, ListModelMixin
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyModelMixin, ListModelMixin, RetrieveModelMixin
 import ast
 import ipaddress
 import traceback
@@ -173,6 +173,22 @@ class BulkDestroyModelMixin(DestroyModelMixin):
             instance = self.get_object()
             self.perform_destroy(instance)
         return Response(status=204)
+
+
+class CustomRetrieveModelMixin(RetrieveModelMixin):
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = self.add_info_for_item(serializer.data)
+        return Response(data)
+
+    def add_info_for_item(self, data):
+        """给dict返回数据添加额外信息
+
+        给dict返回数据添加额外信息
+        """
+        return data
 
 class CustomListModelMixin(ListModelMixin):
     

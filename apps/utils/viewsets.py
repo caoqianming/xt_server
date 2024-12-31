@@ -8,7 +8,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from apps.system.models import DataFilter, Dept
-from apps.utils.mixins import MyLoggingMixin, BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin, CustomListModelMixin
+from apps.utils.mixins import (MyLoggingMixin, BulkCreateModelMixin, BulkUpdateModelMixin, 
+                                                BulkDestroyModelMixin, CustomListModelMixin, CustomRetrieveModelMixin)
 from apps.utils.permission import ALL_PERMS, RbacPermission, get_user_perms_map
 from apps.utils.queryset import get_child_queryset2, get_child_queryset_u
 from apps.utils.serializers import ComplexSerializer
@@ -183,7 +184,7 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
         return queryset.filter(create_by=self.request.user)
 
 class CustomModelViewSet(BulkCreateModelMixin, BulkUpdateModelMixin, CustomListModelMixin,
-                         RetrieveModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
+                         CustomRetrieveModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     """
     增强的ModelViewSet
     """
