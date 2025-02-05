@@ -11,7 +11,7 @@ myLogger = logging.getLogger('log')
 @auto_log(name='阿里云短信', raise_exception=True, send_mail=True)
 def send_sms(phone: str, template_code: int, template_param: dict):
     config = get_sysconfig()
-    if config['sms'].get('enabled', True) is False:
+    if  config.get("sms", {}).get('enabled', True) is False:
         return
     client = AcsClient(config['sms']['xn_key'], config['sms']['xn_secret'], 'default')
     request = CommonRequest()
