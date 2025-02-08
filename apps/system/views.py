@@ -41,7 +41,6 @@ from cron_descriptor import get_description
 import locale
 from drf_yasg.utils import swagger_auto_schema
 from server.settings import get_sysconfig, update_sysconfig, update_dict
-from apps.utils.constants import DEFAULT_PWD
 from django.core.cache import cache
 from apps.utils.permission import get_user_route
 
@@ -446,7 +445,7 @@ class UserViewSet(CustomModelViewSet):
 
         创建用户
         """
-        password = make_password('abc!0000')
+        password = make_password(get_sysconfig("default_pwd", "abc!0000"))
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(password=password, belong_dept=None)
@@ -480,7 +479,7 @@ class UserViewSet(CustomModelViewSet):
     def reset_password(self, request, pk=None):
         user = self.get_object()
         if request.user.is_superuser:
-            user.set_password('abc!0000')
+            user.set_password(get_sysconfig("default_pwd", "abc!0000"))
             user.save()
         else:
             raise PermissionDenied()
