@@ -9,7 +9,7 @@ UserModel = get_user_model()
 def get_user_by_username_or(username: str):
     try:
         user = UserModel._default_manager.get(
-            Q(username=username) | Q(phone=username) | Q(employee__id_number=username))
+            Q(username=username) | Q(phone=username))
         return user, ""
     except UserModel.DoesNotExist:
         return None, 'not_exist'
