@@ -17,7 +17,7 @@ from rest_framework.exceptions import APIException
 from apps.ops.tasks import reload_server_git, reload_server_only, reload_web_git, backup_database, backup_media
 from rest_framework.permissions import IsAdminUser
 from drf_yasg.utils import swagger_auto_schema
-from apps.ops.service import ServerService
+from apps.ops.service import ServerService, CeleryMonitor, RedisMonitor
 from server.settings import BACKUP_PATH
 # Create your views here.
 
@@ -253,3 +253,26 @@ class TlogViewSet(ListModelMixin, CustomGenericViewSet):
     ordering = ['-requested_at']
     filterset_class = TlogFilterSet
     search_fields = ['path']
+
+class CeleryInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        获取celery状态信息
+
+        获取celery状态信息
+        """
+        return Response(CeleryMonitor.get_info())
+
+
+class RedisInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        获取redis状态信息
+
+        获取redis状态信息
+        """
+        return Response(RedisMonitor.get_info())

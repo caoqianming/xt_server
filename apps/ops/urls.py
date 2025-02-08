@@ -2,7 +2,7 @@ from django.urls import path
 from apps.ops.views import (DrfRequestLogViewSet, CpuView, MemoryView, DiskView, DbBackupDeleteView,
                             LogView, LogDetailView,
                             DbBackupView, ReloadClientGit, ReloadServerGit, ReloadServerOnly,
-                            BackupDatabase, BackupMedia, TlogViewSet)
+                            BackupDatabase, BackupMedia, TlogViewSet, CeleryInfoView, RedisInfoView)
 
 API_BASE_URL = 'api/ops/'
 HTML_BASE_URL = 'ops/'
@@ -19,6 +19,8 @@ urlpatterns = [
     path(API_BASE_URL + 'server/cpu/', CpuView.as_view()),
     path(API_BASE_URL + 'server/memory/', MemoryView.as_view()),
     path(API_BASE_URL + 'server/disk/', DiskView.as_view()),
+    path(API_BASE_URL + 'celery/', CeleryInfoView.as_view()),
+    path(API_BASE_URL + 'redis/', RedisInfoView.as_view()),
     path(API_BASE_URL + 'request_log/',
          DrfRequestLogViewSet.as_view({'get': 'list'}), name='requestlog_view'),
     path(API_BASE_URL + 'tlog/',
