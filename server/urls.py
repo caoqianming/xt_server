@@ -34,6 +34,8 @@ schema_view = get_schema_view(
     url=settings.BASE_URL
 )
 
+admin.site.site_header = settings.SYS_NAME
+
 urlpatterns = [
     # django后台
     path('django/admin/doc/', include('django.contrib.admindocs.urls')),

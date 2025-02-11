@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 ALLOWED_HOSTS = ['*']
 
-SYS_NAME = 'HAPPY-DRF'
+SYS_NAME = 'XT_ADMIN'
 SYS_VERSION = '2.3.0'
 
 
