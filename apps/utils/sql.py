@@ -13,9 +13,11 @@ def execute_raw_sql(sql: str, params=None):
             cursor.execute(sql, params=params)
         else:
             cursor.execute(sql)
-        columns  = [desc[0] for desc in cursor.description]
-        rows = cursor.fetchall()
-        return columns, rows
+        if cursor.description:
+            columns  = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return columns, rows
+        return [], []
     
 def format_sqldata(columns, rows):
     return [columns] + rows, [dict(zip(columns, row)) for row in rows]
