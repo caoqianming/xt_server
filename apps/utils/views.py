@@ -1,10 +1,8 @@
 
 import os
-import cv2
 from django.http import HttpResponse
 from apps.utils.errors import SIGN_MAKE_FAIL
 from server.settings import BASE_DIR
-import numpy as np
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError
 from apps.utils.viewsets import CustomGenericViewSet
@@ -29,6 +27,8 @@ class SignatureViewSet(CustomCreateModelMixin, CustomGenericViewSet):
 
         照片生成透明签名图片
         """
+        import cv2
+        import numpy as np
         path = (BASE_DIR + request.data['path']).replace('\\', '/')
         try:
             image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
