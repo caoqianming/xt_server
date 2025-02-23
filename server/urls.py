@@ -48,6 +48,7 @@ urlpatterns = [
     path('', include('apps.wf.urls')),
     path('', include('apps.utils.urls')),
     path('', include('apps.ops.urls')),
+    path('', include('apps.audit.urls')),
 
     # 前端页面入口
     path('', TemplateView.as_view(template_name="index.html")),

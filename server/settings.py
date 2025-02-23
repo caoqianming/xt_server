@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     'apps.system',
     'apps.auth1',
     'apps.wf',
-    'apps.ops'
+    'apps.ops',
+    'apps.audit',
 ]
 
 MIDDLEWARE = [
