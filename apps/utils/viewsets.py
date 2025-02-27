@@ -37,7 +37,8 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
     prefetch_related_fields = []
     permission_classes = [IsAuthenticated & RbacPermission]
     data_filter = False  # 数据权限过滤是否开启(需要RbacPermission)
-    data_filter_field = 'belong_dept'
+    data_filter_field:str = 'belong_dept'
+    data_filter_field_user:str = None
     hash_k = None
     cache_seconds = 5   # 接口缓存时间默认5秒
     filterset_fields = select_related_fields
@@ -144,7 +145,7 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
                             elif data_range == DataFilter.THISLEVEL:
                                 queryset = self.filter_t(queryset, dept)
                             elif data_range == DataFilter.MYSELF:
-                                queryset = queryset.filter(create_by=user)
+                                queryset = self.filter_my(queryset, user)
                             new_queryset = new_queryset | queryset
                         return new_queryset
                     else:
@@ -183,6 +184,15 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
             return queryset
         return queryset.filter(create_by=self.request.user)
 
+    def filter_my(self, queryset, user):
+        """过滤本人, 可重写
+        """
+        if self.data_filter_field_user:
+            whereis = {self.data_filter_field_user: user}
+            queryset = queryset.filter(whereis)
+            return queryset
+        return queryset.filter(create_by=user)
+    
 class CustomModelViewSet(BulkCreateModelMixin, BulkUpdateModelMixin, CustomListModelMixin,
                          CustomRetrieveModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     """
