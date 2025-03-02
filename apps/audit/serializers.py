@@ -1,5 +1,12 @@
 from apps.utils.serializers import CustomModelSerializer
-from apps.audit.models import Standard, StandardItem, Company
+from apps.audit.models import (Standard, StandardItem, 
+                               Company, Atask, C_COMPANY, AtaskTeam,
+                               AtaskItem, AtaskIssue)
+from rest_framework.exceptions import ParseError
+from rest_framework import serializers
+from django.db import transaction
+from apps.system.models import User
+from apps.utils.constants import EXCLUDE_FIELDS, EXCLUDE_FIELDS_BASE
 
 class StandardSerializer(CustomModelSerializer):
     class Meta:
@@ -17,3 +24,66 @@ class CompanySerializer(CustomModelSerializer):
     class Meta:
         model = Company
         fields = "__all__"
+
+class AtaskSerializer(CustomModelSerializer):
+    company_name = serializers.CharField(source="company.name", read_only=True)
+    standard_name = serializers.CharField(source="standard.name", read_only=True)
+    class Meta:
+        model = Atask
+        fields = "__all__"
+        read_only_fields = ["enabled"]
+    
+    def validate(self, attrs):
+        company:Company = attrs["company"]
+        if company.level != C_COMPANY:
+            raise ParseError("只可选择公司")
+        standard:Standard = attrs["standard"]
+        if standard.to_type not in company.types:
+            raise ParseError("该公司不适用该标准")
+        return attrs
+    
+    def update(self, instance, validated_data):
+        atask:Atask = instance
+        if atask.state != Atask.S_WAIT:
+            raise ParseError("该审计任务非待开始状态无法修改")
+        return super().update(instance, validated_data)
+    
+class AtaskTeamSerializer(CustomModelSerializer):
+    member_name = serializers.CharField(source="member.name", read_only=True)
+    class Meta:
+        model = AtaskTeam
+        fields = "__all__"
+
+    def create(self, validated_data):
+        atask:Atask = validated_data["atask"]
+        member:User = validated_data["member"]
+        if AtaskTeam.objects.filter(atask=atask, member=member).exists():
+            raise ParseError("该成员已添加")
+        return super().create(validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        validated_data.pop("member")
+        duty_type = validated_data["duty_type"]
+        if duty_type == 10 and AtaskTeam.objects.filter(atask=instance.atask, duty_type=10).exclude(pk=instance.pk).exists():
+            raise ParseError("组长已存在")
+        return super().update(instance, validated_data)
+    
+class AtaskItemSerializer(CustomModelSerializer):
+    check_user_name = serializers.CharField(source="check_user.name", read_only=True)
+    standarditem_ = StandardItemSerializer(source="standarditem", read_only=True)
+    class Meta:
+        model = AtaskItem
+        fields = "__all__"
+
+class AtaskItemCheckSerializer(CustomModelSerializer):
+    class Meta:
+        model = AtaskItem
+        fields = ["id", "is_suit", "note", "kill_score"]
+
+class AtaskIssueSerializer(CustomModelSerializer):
+    class Meta:
+        model = AtaskIssue
+        fields = "__all__"
+        read_only_fields = EXCLUDE_FIELDS_BASE + ["ataskitem", "issue"]
+    

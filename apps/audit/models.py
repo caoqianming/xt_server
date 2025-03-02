@@ -1,6 +1,7 @@
 from apps.utils.models import CommonADModel, BaseModel
 from apps.system.models import User, File
 from django.db import models
+from rest_framework.exceptions import ParseError
 
 T_KS = 10
 T_SN = 20
@@ -18,6 +19,7 @@ class Standard(CommonADModel):
     name = models.CharField('标准名称', max_length=100, unique=True)
     to_type = models.PositiveSmallIntegerField("适用类型", default=T_KS, choices=TYS)
     enabled = models.BooleanField("启用", default=False)
+    total_score = models.PositiveIntegerField("总分", default=0)
 
     class Meta:
         verbose_name = verbose_name_plural = '审计标准'
@@ -37,7 +39,8 @@ class StandardItem(BaseModel):
     risk_level = models.PositiveSmallIntegerField("风险等级", default=R_LOW, choices=((R_LOW, "低风险"), (R_MID, "中风险"), (R_HIGH, "高风险"), (R_VH, "重大风险")))
     content = models.TextField('条款内容')
     method = models.TextField('考评办法')
-    full_score = models.PositiveSmallIntegerField("满分分值")
+    full_score = models.PositiveSmallIntegerField("满分分值", null=True, blank=True)
+    parent = models.ForeignKey('self', verbose_name="上级条款", on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '审计标准条款'
@@ -53,24 +56,37 @@ class Company(CommonADModel):
         verbose_name = verbose_name_plural = '审计单位'
 
 class Atask(CommonADModel):
+    S_WAIT = 10
+    S_DOING = 20
+    S_DONE = 30
     year = models.PositiveIntegerField('审计年度')
+    state = models.PositiveSmallIntegerField("状态", 
+            choices=((S_WAIT, "待开始"), (S_DOING, "进行中"), (S_DONE, "已完成")), default=S_WAIT)
     company = models.ForeignKey(Company, verbose_name="审计对象", on_delete=models.CASCADE)
     standard = models.ForeignKey(Standard, verbose_name="审计标准", on_delete=models.CASCADE)
-    enabled = models.BooleanField("启用", default=False)
     note = models.TextField('备注', null=True, blank=True)
+    score = models.PositiveIntegerField("得分", null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '审计任务'
 
     @property
     def leader(self):
-        ateam = AtaskTeam = AtaskTeam.objects.filter(atask=self, duty_type=10).first()
+        ateam = AtaskTeam.objects.filter(atask=self, duty_type=10).first()
         if ateam:
             return ateam.member
         return None
+    
+    @property
+    def members(self):
+        return AtaskTeam.objects.filter(atask=self).order_by("duty_type")
+    
+    def check_do(self):
+        if self.state != Atask.S_DOING:
+            raise ParseError("该任务状态下不可操作")
 
 class AtaskTeam(BaseModel):
-    atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE)
+    atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, related_name="team_atask")
     member = models.ForeignKey(User, verbose_name="成员", on_delete=models.CASCADE)
     duty_type = models.PositiveSmallIntegerField("职责类型", choices=((10, "组长"), (20, "组员")))
 
@@ -80,9 +96,10 @@ class AtaskTeam(BaseModel):
 
 class AtaskItem(BaseModel):
     atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE)
-    standard_item = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", on_delete=models.CASCADE)
+    standarditem = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", on_delete=models.CASCADE)
     is_suit = models.BooleanField("是否适用", default=True)
     checked = models.BooleanField("是否已检查", default=False)
+    check_user = models.ForeignKey(User, verbose_name="检查人", on_delete=models.CASCADE, null=True, blank=True)
     note = models.TextField('备注', null=True, blank=True)
     kill_score = models.PositiveSmallIntegerField("扣分", default=0)
     score = models.PositiveSmallIntegerField("得分", null=True, blank=True)
@@ -94,7 +111,7 @@ class AtaskIssue(CommonADModel):
     """
     create_by即为检查人
     """
-    atask_item = models.ForeignKey(AtaskItem, verbose_name="关联审计条款", on_delete=models.CASCADE)
+    ataskitem = models.ForeignKey(AtaskItem, verbose_name="关联审计条款", on_delete=models.CASCADE)
     content = models.TextField('问题内容')
     photos = models.ManyToManyField(File, verbose_name="问题照片", blank=True)
     note = models.TextField('备注', null=True, blank=True)
