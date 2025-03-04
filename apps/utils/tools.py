@@ -250,6 +250,23 @@ def check_id_number(idcard):
         return False, Errors[0]
 
 
+def check_id_number_strict(id_card: str):
+    """校验 18 位中国身份证号码是否合法"""
+    if not re.match(r'^\d{17}[\dXx]$', id_card):
+        return False
+
+    # 系数和校验码
+    weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
+    check_codes = "10X98765432"
+
+    # 计算校验码
+    total = sum(int(id_card[i]) * weights[i] for i in range(17))
+    expected_check_code = check_codes[total % 11]
+
+    if expected_check_code == id_card[-1].upper():
+        return id_card
+    raise ValidationError('身份证号校验失败')
+
 def check_phone_e(phone):
     re_phone = r'^1\d{10}$'
     if not re.match(re_phone, phone):
