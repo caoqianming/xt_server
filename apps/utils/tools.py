@@ -9,6 +9,7 @@ import requests
 from io import BytesIO
 from rest_framework.serializers import ValidationError
 import ast
+from typing import Dict
 
 class CodeAnalyzer(ast.NodeVisitor):
     def __init__(self):
@@ -323,3 +324,16 @@ def build_tree_from_list(data, parent_field="parent"):
                 tree.append(item)
 
     return tree
+
+def convert_ordereddict(item):
+    """递归地将 OrderedDict 转换为普通字典"""
+    if isinstance(item, list):
+        return [convert_ordereddict(i) for i in item]  # 递归处理列表中的每个元素
+    elif isinstance(item, dict):
+        # 如果是 OrderedDict 或普通字典，遍历所有键值对进行转换
+        return {key: convert_ordereddict(value) for key, value in item.items()}
+    return item 
+
+def update_dict(d, update_data:Dict) -> Dict:
+    d.update(update_data)
+    return d
