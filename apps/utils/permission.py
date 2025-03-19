@@ -36,7 +36,7 @@ def get_user_route(user: User) -> List[str]:
     else:
        user_routes_qs = perm_qs.filter(role_perms__in=PostRole.objects.filter(
            post__in=UserPost.objects.filter(user=user).values_list("post", flat=True)).values_list("role", flat=True)).distinct()
-    user_routes_qs = user_routes_qs.order_by('sort')
+    user_routes_qs = user_routes_qs.order_by('sort', 'create_time')
     user_routes_list = list(user_routes_qs.values("id", "name", "type", "route_name", "icon", "path", "component", "is_hidden", "is_fullpage", "parent"))
     for item in user_routes_list:
         item["meta"] = {}
