@@ -54,6 +54,8 @@ def get_user_route(user: User) -> List[str]:
         item.pop("is_fullpage")
         item["name"] = item["route_name"]
         item.pop("route_name")
+        if item["path"].startswith("http"):
+            item["meta"]["type"] = "iframe"
     return build_tree_from_list(user_routes_list)
 
     
