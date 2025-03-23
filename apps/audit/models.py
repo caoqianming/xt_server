@@ -53,7 +53,7 @@ class Company(CommonADModel):
     types = models.JSONField('类型', default=list, blank=True, null=True)
 
     class Meta:
-        verbose_name = verbose_name_plural = '审计单位'
+        verbose_name = verbose_name_plural = '受审计单位'
 
 class Atask(CommonADModel):
     S_WAIT = 10
