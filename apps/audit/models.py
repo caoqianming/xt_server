@@ -34,11 +34,16 @@ class StandardItem(BaseModel):
     R_HIGH = 30
     R_VH = 40
     standard = models.ForeignKey(Standard, verbose_name="关联审计标准", on_delete=models.CASCADE)
+    cate = models.PositiveSmallIntegerField("大类", choices=((10, "基础部分"), (20, "现场部分")))
     number = models.CharField('条款号', max_length=100)
-    level = models.PositiveSmallIntegerField("条款等级", default=L_1, choices=((L_1, "一级"), (L_2, "二级"), (L_3, "三级")))
-    risk_level = models.PositiveSmallIntegerField("风险等级", default=R_LOW, choices=((R_LOW, "低风险"), (R_MID, "中风险"), (R_HIGH, "高风险"), (R_VH, "重大风险")))
-    content = models.TextField('条款内容')
-    method = models.TextField('考评办法')
+    level = models.PositiveSmallIntegerField("条款等级", 
+                default=L_1, choices=((L_1, "一级"), (L_2, "二级"), (L_3, "三级")), null=True, blank=True)
+    risk_level = models.PositiveSmallIntegerField("风险等级", 
+                default=R_LOW, 
+                choices=((R_LOW, "低风险"), (R_MID, "中风险"), (R_HIGH, "高风险"), (R_VH, "重大风险")),
+                null=True, blank=True)
+    content = models.TextField('条款内容', null=True, blank=True)
+    method = models.TextField('考评办法', null=True, blank=True)
     full_score = models.PositiveSmallIntegerField("满分分值", null=True, blank=True)
     parent = models.ForeignKey('self', verbose_name="上级条款", on_delete=models.CASCADE, null=True, blank=True)
 

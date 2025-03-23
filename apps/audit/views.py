@@ -25,7 +25,7 @@ class StandardItemViewSet(CustomModelViewSet):
     serializer_class = StandardItemSerializer
     filterset_fields = ["standard"]
     search_fields = ["number", "content"]
-    ordering = ["standard", "number"]
+    ordering = ["standard", "cate", "number"]
 
 class CompanyViewSet(CustomModelViewSet):
     queryset = Company.objects.all()
