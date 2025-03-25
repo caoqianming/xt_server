@@ -34,7 +34,7 @@ ALLOWED_HOSTS = ['*']
 
 SYS_NAME = 'XT_ADMIN'
 SYS_VERSION = '2.3.0'
-
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Application definition
 
