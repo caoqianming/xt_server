@@ -287,7 +287,7 @@ LOGGING = {
             'when': 'midnight',  # 每天午夜滚动
             'interval': 1,
             'maxBytes': 1024 * 1024 * 2,  # 文件大小
-            'backupCount': 10,  # 备份数
+            'backupCount': 30,  # 备份数
             'formatter': 'standard',  # 输出格式
             'encoding': 'utf-8',  # 设置默认编码，否则打印出来汉字乱码
         },
@@ -299,7 +299,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'maxBytes': 1024 * 1024 * 2,  # 文件大小
-            'backupCount': 10,  # 备份数
+            'backupCount': 30,  # 备份数
             'formatter': 'standard',  # 输出格式
             'encoding': 'utf-8',  # 设置默认编码
         },
@@ -318,7 +318,7 @@ LOGGING = {
             'when': 'midnight',
             'interval': 1,
             'maxBytes': 1024 * 1024 * 2,
-            'backupCount': 10,
+            'backupCount': 30,
             'formatter': 'standard',
             'encoding': 'utf-8',  # 设置默认编码
         },
