@@ -290,6 +290,7 @@ LOGGING = {
             'backupCount': 30,  # 备份数
             'formatter': 'standard',  # 输出格式
             'encoding': 'utf-8',  # 设置默认编码，否则打印出来汉字乱码
+            'delay': True,  # 延迟打开文件，减少锁定冲突
         },
         # 输出错误日志
         'error': {
@@ -302,6 +303,7 @@ LOGGING = {
             'backupCount': 30,  # 备份数
             'formatter': 'standard',  # 输出格式
             'encoding': 'utf-8',  # 设置默认编码
+            'delay': True,  # 延迟打开文件，减少锁定冲突
         },
         # 控制台输出
         'console': {
@@ -321,6 +323,7 @@ LOGGING = {
             'backupCount': 30,
             'formatter': 'standard',
             'encoding': 'utf-8',  # 设置默认编码
+            'delay': True,  # 延迟打开文件，减少锁定冲突
         },
     },
     # 配置用哪几种 handlers 来处理日志
