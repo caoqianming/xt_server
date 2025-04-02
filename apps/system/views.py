@@ -718,6 +718,8 @@ class SysBaseConfigView(APIView):
             config = get_sysconfig()
         base_dict = {key: config[key]
                      for key in self.read_keys if key in config}
+        base_dict.get("base", {})["sys_version"] = settings.SYS_VERSION
+        base_dict.get("base", {})["sys_name"] = settings.SYS_NAME
         return Response(base_dict)
 
 
