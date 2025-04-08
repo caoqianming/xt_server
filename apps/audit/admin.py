@@ -6,7 +6,7 @@ from apps.audit.models import (Standard, StandardItem, Company,
 @admin.register(StandardItem)
 class StandardItemAdmin(admin.ModelAdmin):
     model = StandardItem
-    list_display = ["id", "standard",  "number", "level", "risk_level", "full_score"]
+    list_display = ["id", "standard",  "number", "content", "level", "risk_level", "full_score"]
     ordering = ["number"]
     
 @admin.register(Standard)

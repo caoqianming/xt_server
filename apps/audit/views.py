@@ -4,7 +4,7 @@ from apps.utils.viewsets import CustomModelViewSet, CustomGenericViewSet
 from apps.audit.models import (Standard, StandardItem, Company, Atask, AtaskIssue, AtaskTeam, AtaskItem)
 from apps.audit.serializers import (AtaskItemSerializer, StandardSerializer, StandardItemSerializer, 
                                     CompanySerializer, AtaskSerializer, 
-                                    AtaskItemCheckSerializer, AtaskIssueSerializer)
+                                    AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer)
 from rest_framework.exceptions import ParseError
 from apps.utils.permission import has_perm
 from rest_framework.decorators import action
@@ -25,7 +25,7 @@ class StandardItemViewSet(CustomModelViewSet):
     serializer_class = StandardItemSerializer
     filterset_fields = ["standard"]
     search_fields = ["number", "content"]
-    ordering = ["standard", "cate", "number"]
+    ordering = ["standard", "cate",  "number"]
 
 class CompanyViewSet(CustomModelViewSet):
     queryset = Company.objects.all()
@@ -40,12 +40,30 @@ class AtaskViewSet(CustomModelViewSet):
     perms_map = {"get": "atask.view", "post": "atask.create", "put": "atask.update", "delete": "atask.delete"}
     queryset = Atask.objects.all()
     serializer_class = AtaskSerializer
-    filterset_fields = ["company", "year", "standard", "standard__type", "state"]
+    retrieve_serializer_class = AtaskDetailSerializer
+    filterset_fields = ["company", "year", "standard", "standard__to_type", "state"]
     search_fields = ["company__name"]
     data_filter = True
     data_filter_field_user = "team_atask__member"
 
     def add_info_for_list(self, data):
+        ids = [ins["id"] for ins in data]
+        members_dict  = {}
+        members = AtaskTeam.objects.filter(atask__id__in=ids).order_by("duty_type").select_related('member', 'atask')
+        for member in members:
+            if member.atask.id not in members_dict:
+                members_dict[member.atask.id] = []
+            members_dict[member.atask.id].append({
+                "member_name": member.member.name,
+                "duty_type": member.duty_type
+            })
+        # 然后更新data
+        for item in data:
+            task_id = item["id"]
+            if task_id in members_dict:
+                item["team"] = members_dict[task_id]
+            else:
+                item["team"] = []
         return data
     
     def destroy(self, request, *args, **kwargs):

@@ -28,6 +28,7 @@ class CompanySerializer(CustomModelSerializer):
 class AtaskSerializer(CustomModelSerializer):
     company_name = serializers.CharField(source="company.name", read_only=True)
     standard_name = serializers.CharField(source="standard.name", read_only=True)
+    standard_to_type = serializers.CharField(source="standard.to_type", read_only=True)
     class Meta:
         model = Atask
         fields = "__all__"
@@ -47,7 +48,7 @@ class AtaskSerializer(CustomModelSerializer):
         if atask.state != Atask.S_WAIT:
             raise ParseError("该审计任务非待开始状态无法修改")
         return super().update(instance, validated_data)
-    
+
 class AtaskTeamSerializer(CustomModelSerializer):
     member_name = serializers.CharField(source="member.name", read_only=True)
     class Meta:
@@ -68,6 +69,9 @@ class AtaskTeamSerializer(CustomModelSerializer):
         if duty_type == 10 and AtaskTeam.objects.filter(atask=instance.atask, duty_type=10).exclude(pk=instance.pk).exists():
             raise ParseError("组长已存在")
         return super().update(instance, validated_data)
+
+class AtaskDetailSerializer(AtaskSerializer):
+    team = AtaskTeamSerializer(many=True, read_only=True)
     
 class AtaskItemSerializer(CustomModelSerializer):
     check_user_name = serializers.CharField(source="check_user.name", read_only=True)

@@ -24,6 +24,8 @@ class Standard(CommonADModel):
     class Meta:
         verbose_name = verbose_name_plural = '审计标准'
 
+    def __str__(self):
+        return self.name
 
 class StandardItem(BaseModel):
     L_1 = 10
@@ -60,6 +62,9 @@ class Company(CommonADModel):
     class Meta:
         verbose_name = verbose_name_plural = '受审计单位'
 
+    def __str__(self):
+        return self.name
+
 class Atask(CommonADModel):
     S_WAIT = 10
     S_DOING = 20
@@ -83,7 +88,7 @@ class Atask(CommonADModel):
         return None
     
     @property
-    def members(self):
+    def team(self):
         return AtaskTeam.objects.filter(atask=self).order_by("duty_type")
     
     def check_do(self):
