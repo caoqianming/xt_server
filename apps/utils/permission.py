@@ -118,6 +118,8 @@ class RbacPermission(BasePermission):
         """
         if not hasattr(view, 'perms_map'):
             return True
+        if request.user.is_superuser:
+            return True
         user_perms_map = get_user_perms_map(request.user)
         if isinstance(user_perms_map, dict):
             perms_map = view.perms_map
