@@ -10,6 +10,14 @@ from io import BytesIO
 from rest_framework.serializers import ValidationError
 import ast
 from typing import Dict
+from django.core.serializers.json import DjangoJSONEncoder
+from decimal import Decimal
+
+class MyJSONEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 class CodeAnalyzer(ast.NodeVisitor):
     def __init__(self):
