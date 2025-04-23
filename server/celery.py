@@ -1,5 +1,5 @@
 import os
-from . import conf
+from config import conf
 from celery import Celery
 from celery.app.control import Control, Inspect
 

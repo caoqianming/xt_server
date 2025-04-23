@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import os
 import json
 import sys
-from .conf import *
+from config.conf import *
 from django.core.cache import cache
 import logging
 
@@ -344,7 +344,7 @@ LOGGING = {
 }
 
 ##### 加载客户可自定义配置并提供操作方法 #####
-SYS_JSON_PATH = os.path.join(BASE_DIR, 'server/conf.json')
+SYS_JSON_PATH = os.path.join(BASE_DIR, 'config/conf.json')
 
 def get_sysconfig(key='', default='raise_error', reload=False):
     """获取系统配置可指定key字符串

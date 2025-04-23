@@ -20,6 +20,8 @@ apps.zip
 server/conf.py
 server/conf.ini
 server/conf*.json
+config/conf*.py
+config/conf*.json
 sh/*
 temp/*
 nohup.out
