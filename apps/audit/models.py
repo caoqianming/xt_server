@@ -11,6 +11,11 @@ TYS = (
     (T_SN, "水泥"),
     (T_SH, "商混")
 )
+TKS_DICT = {
+    T_KS: "矿山",
+    T_SN: "水泥",
+    T_SH: "商混"
+}
 C_GROUP = 10
 C_AREA = 20
 C_COMPANY = 30

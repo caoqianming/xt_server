@@ -10,6 +10,7 @@ from apps.utils.permission import has_perm
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework.response import Response
+from .models import TKS_DICT
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -31,10 +32,18 @@ class CompanyViewSet(CustomModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     filterset_fields = {
-        "level": ["exact"],
-        "types": ["contains"]
+        "level": ["exact"]
     }
     search_fields = ["name"]
+
+    def add_info_for_list(self, data):
+        for item in data:
+            types = item["types"]
+            types_name = ""
+            for typei in types:
+                types_name += TKS_DICT[typei] + "/"
+            item["types_name"] = types_name
+        return data
 
 class AtaskViewSet(CustomModelViewSet):
     perms_map = {"get": "atask.view", "post": "atask.create", "put": "atask.update", "delete": "atask.delete"}
@@ -103,8 +112,8 @@ class AtaskItemViewSet(CustomListModelMixin, UpdateModelMixin, CustomGenericView
     queryset = AtaskItem.objects.all()
     serializer_class = AtaskItemSerializer
     update_serializer_class = AtaskItemCheckSerializer
-    select_related_fields = ["atask", "standard"]
-    filterset_fields = ["atask", "standarditem", "check_user"]
+    select_related_fields = ["atask", "standarditem"]
+    filterset_fields = ["atask", "standarditem", "check_user", "standarditem__level"]
     ordering = ["standarditem__number", "create_time"]
 
     def update(self, request, *args, **kwargs):
@@ -112,13 +121,13 @@ class AtaskItemViewSet(CustomListModelMixin, UpdateModelMixin, CustomGenericView
         if obj.atask.state != Atask.S_DOING:
             raise ParseError("该任务状态下不可操作")
         return super().update(request, *args, **kwargs)
-    def get_queryset(self):
-        if self.request.query_params.get("atask", None):
+    
+    def list(self, request, *args, **kwargs):
+        if self.request.query_params.get('atask', None):
             pass
         else:
-            raise ParseError("缺少atask参数")
-        return super().get_queryset()
-    
+            raise ParseError("缺少查询参数")
+        return super().list(request, *args, **kwargs)
 
 class AtaskIssueViewSet(CustomModelViewSet):
     queryset = AtaskIssue.objects.all()
