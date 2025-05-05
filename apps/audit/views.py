@@ -6,11 +6,12 @@ from apps.audit.serializers import (AtaskItemSerializer, StandardSerializer, Sta
                                     CompanySerializer, AtaskSerializer, 
                                     AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer)
 from rest_framework.exceptions import ParseError
-from apps.utils.permission import has_perm
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework.response import Response
 from .models import TKS_DICT
+from apps.audit.service import daoru_standard
+from django.conf import settings
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -19,6 +20,13 @@ class StandardViewSet(CustomModelViewSet):
     filterset_fields = ["to_type", "enabled"]
     search_fields = ["name"]
 
+    @action(methods=['post'], detail=True, perms_map={'post': 'standard.update'})
+    @transaction.atomic
+    def daoru(self, request, *args, **kwargs):
+        path = request.data.get("path", "")
+        if path:
+            daoru_standard(settings.BASE_DIR + path)
+        return ParseError("缺少path参数")
 
 class StandardItemViewSet(CustomModelViewSet):
     perms_map = {"get": "*", "post": "standard.update", "put": "standard.update", "delete": "standard.update"}
