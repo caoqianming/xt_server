@@ -23,10 +23,12 @@ class StandardViewSet(CustomModelViewSet):
     @action(methods=['post'], detail=True, perms_map={'post': 'standard.update'})
     @transaction.atomic
     def daoru(self, request, *args, **kwargs):
+        instance = self.get_object()
         path = request.data.get("path", "")
         if path:
-            daoru_standard(settings.BASE_DIR + path)
-        return ParseError("缺少path参数")
+            daoru_standard(settings.BASE_DIR + path, instance)
+            return Response()
+        raise ParseError("缺少path参数")
 
 class StandardItemViewSet(CustomModelViewSet):
     perms_map = {"get": "*", "post": "standard.update", "put": "standard.update", "delete": "standard.update"}
@@ -43,6 +45,8 @@ class CompanyViewSet(CustomModelViewSet):
         "level": ["exact"]
     }
     search_fields = ["name"]
+    ordering_fields = ["create_time", "update_time", "name"]
+    ordering = ["name"]
 
     def add_info_for_list(self, data):
         for item in data:

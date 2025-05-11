@@ -46,7 +46,6 @@ class StandardItem(BaseModel):
     level = models.PositiveSmallIntegerField("条款等级", 
                 default=L_1, choices=((L_1, "一级"), (L_2, "二级"), (L_3, "三级")), null=True, blank=True)
     risk_level = models.PositiveSmallIntegerField("风险等级", 
-                default=R_LOW, 
                 choices=((R_LOW, "低风险"), (R_MID, "中风险"), (R_HIGH, "高风险"), (R_VH, "重大风险")),
                 null=True, blank=True)
     content = models.TextField('条款内容', null=True, blank=True)
