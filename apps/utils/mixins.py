@@ -16,6 +16,7 @@ from rest_framework.generics import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from apps.utils.serializers import PkSerializer
+from django.core.files.uploadedfile import UploadedFile
 
 # 实例化myLogger
 myLogger = logging.getLogger('log')
@@ -414,6 +415,7 @@ class MyLoggingMixin(object):
                 "secret",
                 "password",
                 "signature",
+                "file"
             }
 
             data = dict(data)
