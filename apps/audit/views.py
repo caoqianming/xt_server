@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from apps.utils.mixins import CustomListModelMixin, UpdateModelMixin
+from apps.utils.mixins import CustomListModelMixin, BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin
 from apps.utils.viewsets import CustomModelViewSet, CustomGenericViewSet
 from apps.audit.models import (Standard, StandardItem, Company, Atask, AtaskIssue, AtaskTeam, AtaskItem)
 from apps.audit.serializers import (AtaskItemSerializer, StandardSerializer, StandardItemSerializer, 
-                                    CompanySerializer, AtaskSerializer, 
+                                    CompanySerializer, AtaskSerializer, AtaskTeamSerializer,
                                     AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer)
 from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
@@ -119,7 +119,12 @@ class AtaskViewSet(CustomModelViewSet):
         ins.save()
         return Response()
 
-class AtaskItemViewSet(CustomListModelMixin, UpdateModelMixin, CustomGenericViewSet):
+class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
+    perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}
+    queryset = AtaskTeam.objects.all()
+    serializer_class = AtaskTeamSerializer
+
+class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "put": "atask.check"}
     queryset = AtaskItem.objects.all()
     serializer_class = AtaskItemSerializer
