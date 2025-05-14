@@ -131,8 +131,15 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
     update_serializer_class = AtaskItemCheckSerializer
     select_related_fields = ["atask", "standarditem"]
     filterset_fields = ["atask", "standarditem", "check_user", "standarditem__level"]
-    ordering = ["standarditem__number", "create_time"]
+    ordering = ["atask", "standarditem__cate", "standarditem__number"]
 
+    def add_info_for_list(self, data):
+        if isinstance(data, list):
+            dataDict = {None: None}
+            for item in data:
+                dataDict[item["standarditem_"]["id"]] = item["id"]
+                item["parent"] = dataDict[item["standarditem_"]["parent"]]
+        return data
     def update(self, request, *args, **kwargs):
         obj = self.get_object()
         if obj.atask.state != Atask.S_DOING:
