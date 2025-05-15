@@ -87,6 +87,16 @@ def daoru_standard(path: str, sta: Standard):
                     current_item2_score += full_score
                     current_item1_score += full_score
                     total_score += full_score
+                if full_score is None:
+                    current_item3.is_concern = False
+                    current_item3.save(update_fields=["is_concern"])
+                    if current_item2.is_concern is False:
+                        current_item2.is_concern = True
+                        current_item2.save(update_fields=["is_concern"])
+                else:
+                    current_item3.is_concern = True
+                    current_item3.save(update_fields=["is_concern"])
+
                 current_item_2_chid.append(current_item3)
                 if len(current_item_2_chid) == 2:
                     if full_score is None:

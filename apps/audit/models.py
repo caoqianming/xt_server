@@ -48,6 +48,7 @@ class StandardItem(BaseModel):
     risk_level = models.PositiveSmallIntegerField("风险等级", 
                 choices=((R_LOW, "低风险"), (R_MID, "中风险"), (R_HIGH, "高风险"), (R_VH, "重大风险")),
                 null=True, blank=True)
+    is_concern = models.BooleanField("是否最小扣分项", default=False)
     content = models.TextField('条款内容', null=True, blank=True)
     method = models.TextField('考评办法', null=True, blank=True)
     full_score = models.PositiveSmallIntegerField("满分分值", null=True, blank=True)
