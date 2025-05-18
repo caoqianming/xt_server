@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from .models import TKS_DICT
 from apps.audit.service import daoru_standard
 from django.conf import settings
+from .filters import AtaskItemFilter
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -102,7 +103,14 @@ class AtaskViewSet(CustomModelViewSet):
         ins.state = Atask.S_DOING
         ins.save()
         for st in StandardItem.objects.filter(standard=ins.standard).order_by("number"):
-            AtaskItem.objects.create(atask=ins, standarditem=st)
+            checked = None
+            is_suit = None
+            kill_score = None
+            if st.is_concern:
+                checked = False
+                is_suit = True
+                kill_score = 0
+            AtaskItem.objects.get_or_create(atask=ins, standarditem=st, defaults={"checked": checked, "is_suit": is_suit, "kill_score": kill_score})
         return Response()
     
     @action(methods=['post'], detail=True, perms_map={'post': "atask.submit"})
@@ -130,7 +138,7 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
     serializer_class = AtaskItemSerializer
     update_serializer_class = AtaskItemCheckSerializer
     select_related_fields = ["atask", "standarditem"]
-    filterset_fields = ["atask", "standarditem", "check_user", "standarditem__level"]
+    filterset_class = AtaskItemFilter
     ordering = ["atask", "standarditem__cate", "standarditem__number"]
 
     def add_info_for_list(self, data):
@@ -138,13 +146,16 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
             dataDict = {None: None}
             for item in data:
                 dataDict[item["standarditem_"]["id"]] = item["id"]
-                item["parent"] = dataDict[item["standarditem_"]["parent"]]
+                item["parent"] = dataDict.get(item["standarditem_"]["parent"], None)
         return data
-    def update(self, request, *args, **kwargs):
+    
+    @transaction.atomic
+    def perform_update(self, serializer):
         obj = self.get_object()
         if obj.atask.state != Atask.S_DOING:
             raise ParseError("该任务状态下不可操作")
-        return super().update(request, *args, **kwargs)
+        ins = serializer.save()
+        ins.cal_score(self.request.user)
     
     def list(self, request, *args, **kwargs):
         if self.request.query_params.get('atask', None):
@@ -153,23 +164,23 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
             raise ParseError("缺少查询参数")
         return super().list(request, *args, **kwargs)
 
+
 class AtaskIssueViewSet(CustomModelViewSet):
     queryset = AtaskIssue.objects.all()
     serializer_class = AtaskIssueSerializer
+    select_related_fields = ["ataskitem", "ataskitem__atask", "ataskitem__standarditem", "create_by"]
+    prefetch_related_fields = ["photos"]
     filterset_fields = ["ataskitem", "ataskitem__atask"]
 
     def get_queryset(self):
-        if (self.request.query_params.get("ataskitem", None) 
-            or self.request.query_params.get("ataskitem__atask", None)):
-            pass
-        else:
-            raise ParseError("缺少查询参数")
+        if self.request.method == 'GET':
+            if  (self.request.query_params.get("ataskitem", None) 
+                or self.request.query_params.get("ataskitem__atask", None)):
+                pass
+            else:
+                raise ParseError("缺少查询参数")
         return super().get_queryset()
 
-    def create(self, request, *args, **kwargs):
-        ins:AtaskIssue = self.get_object()
-        ins.ataskitem.atask.check_do()
-        return super().create(request, *args, **kwargs)
     def update(self, request, *args, **kwargs):
         ins:AtaskIssue = self.get_object()
         atask:Atask = ins.ataskitem.atask

@@ -101,9 +101,10 @@ def daoru_standard(path: str, sta: Standard):
                 if len(current_item_2_chid) == 2:
                     if full_score is None:
                         current_item_2_chid[0].full_score = None
+                        current_item_2_chid[0].is_concern = False
                     if method is None:
                         current_item_2_chid[0].method = None
-                    current_item_2_chid[0].save(update_fields=["full_score", "method"])
+                    current_item_2_chid[0].save(update_fields=["full_score", "method", "is_concern"])
             if content3 and number3 is None:
                 if content3 in current_item3.content:
                     current_item3.content = content3

@@ -7,6 +7,7 @@ from rest_framework import serializers
 from django.db import transaction
 from apps.system.models import User
 from apps.utils.constants import EXCLUDE_FIELDS, EXCLUDE_FIELDS_BASE
+from apps.system.serializers import FileSerializer
 
 class StandardSerializer(CustomModelSerializer):
     class Meta:
@@ -83,11 +84,22 @@ class AtaskItemSerializer(CustomModelSerializer):
 class AtaskItemCheckSerializer(CustomModelSerializer):
     class Meta:
         model = AtaskItem
-        fields = ["id", "is_suit", "note", "kill_score"]
+        fields = ["id", "is_suit", "note", "kill_score", "score"]
+        extra_kwars = {
+            "socre": {"read_only": True}
+        }
 
 class AtaskIssueSerializer(CustomModelSerializer):
+    ataskitem__standarditem__number = serializers.CharField(source="ataskitem.standarditem.number", read_only=True)
+    create_by_name = serializers.CharField(source="create_by.name", read_only=True)
+    photos_ = FileSerializer(many=True, read_only=True, source="photos")
     class Meta:
         model = AtaskIssue
         fields = "__all__"
-        read_only_fields = EXCLUDE_FIELDS_BASE + ["ataskitem", "issue"]
+        read_only_fields = EXCLUDE_FIELDS_BASE
+
+    def create(self, validated_data):
+        ataskitem:AtaskItem = validated_data["ataskitem"]
+        ataskitem.atask.check_do()
+        return super().create(validated_data)
     

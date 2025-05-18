@@ -2,6 +2,7 @@ from apps.utils.models import CommonADModel, BaseModel
 from apps.system.models import User, File
 from django.db import models
 from rest_framework.exceptions import ParseError
+from django.db.models import Sum
 
 T_KS = 10
 T_SN = 20
@@ -112,15 +113,40 @@ class AtaskTeam(BaseModel):
 class AtaskItem(BaseModel):
     atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE)
     standarditem = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", on_delete=models.CASCADE)
-    is_suit = models.BooleanField("是否适用", default=True)
-    checked = models.BooleanField("是否已检查", default=False)
+    is_suit = models.BooleanField("是否适用", null=True, blank=True)
+    checked = models.BooleanField("是否已检查", null=True, blank=True)
     check_user = models.ForeignKey(User, verbose_name="检查人", on_delete=models.CASCADE, null=True, blank=True)
     note = models.TextField('备注', null=True, blank=True)
-    kill_score = models.PositiveSmallIntegerField("扣分", default=0)
+    kill_score = models.PositiveSmallIntegerField("扣分", null=True, blank=True)
     score = models.PositiveSmallIntegerField("得分", null=True, blank=True)
     
     class Meta:
         verbose_name = verbose_name_plural = '审计条款'
+
+    def cal_score(self, user):
+        if self.standarditem.is_concern:
+            self.score = self.standarditem.full_score - self.kill_score
+            self.checked = True
+            self.check_user = user if self.check_user is None else self.check_user
+            self.save()
+            if self.standarditem.level == 30:
+                l_20 = AtaskItem.objects.get(standarditem=self.standarditem.parent)
+                l_20.kill_score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('kill_score'))['kill_score__sum']
+                l_20.score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('score'))['score__sum']
+                l_20.checked = True
+                l_20.save(update_fields=["kill_score", "score", "checked"])
+                l_10 = AtaskItem.objects.get(standarditem=l_20.standarditem.parent)
+            elif self.standarditem.level == 20:
+                l_10 = AtaskItem.objects.get(standarditem=self.standarditem.parent)
+            l_10.kill_score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('kill_score'))['kill_score__sum']
+            l_10.score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('score'))['score__sum']
+            l_10.checked = True
+            l_10.save(update_fields=["kill_score", "score", "checked"])
+            self.atask.score = AtaskItem.objects.filter(atask=self.atask, standarditem__is_concern=True).aggregate(Sum('score'))['score__sum']
+            self.atask.save(update_fields=["score"])
+        else:
+            raise ParseError("该条款非扣分项,无需编辑")
+        
 
 class AtaskIssue(CommonADModel):
     """
