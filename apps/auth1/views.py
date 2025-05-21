@@ -10,7 +10,7 @@ from apps.auth1.errors import USERNAME_OR_PASSWORD_WRONG
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
 from apps.auth1.services import check_phone_code
-from apps.utils.sms import send_sms
+
 from apps.utils.tools import rannum
 from apps.utils.wxmp import wxmpClient
 from apps.utils.wx import wxClient
@@ -182,6 +182,7 @@ class SendCode(CreateAPIView):
 
         短信验证码发送
         """
+        from apps.utils.sms import send_sms
         phone = request.data['phone']
         code = rannum(6)
         is_ok, _ = send_sms(phone, 505, {'code': code})

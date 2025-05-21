@@ -1,5 +1,4 @@
-from aliyunsdkcore.client import AcsClient
-from aliyunsdkcore.request import CommonRequest
+
 import json
 import logging
 from server.settings import get_sysconfig
@@ -10,6 +9,8 @@ myLogger = logging.getLogger('log')
 
 @auto_log(name='阿里云短信', raise_exception=True, send_mail=True)
 def send_sms(phone: str, template_code: int, template_param: dict):
+    from aliyunsdkcore.client import AcsClient
+    from aliyunsdkcore.request import CommonRequest
     config = get_sysconfig()
     if  config.get("sms", {}).get('enabled', True) is False:
         return
