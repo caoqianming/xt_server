@@ -138,8 +138,8 @@ class AtaskItem(BaseModel):
                 l_10 = AtaskItem.objects.get(standarditem=l_20.standarditem.parent)
             elif self.standarditem.level == 20:
                 l_10 = AtaskItem.objects.get(standarditem=self.standarditem.parent)
-            l_10.kill_score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('kill_score'))['kill_score__sum']
-            l_10.score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('score'))['score__sum']
+            l_10.kill_score = AtaskItem.objects.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('kill_score'))['kill_score__sum']
+            l_10.score = AtaskItem.objects.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('score'))['score__sum']
             l_10.checked = True
             l_10.save(update_fields=["kill_score", "score", "checked"])
             self.atask.score = AtaskItem.objects.filter(atask=self.atask, standarditem__is_concern=True).aggregate(Sum('score'))['score__sum']
