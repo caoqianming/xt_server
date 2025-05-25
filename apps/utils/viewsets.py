@@ -103,16 +103,12 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
         return queryset
 
     def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-        # 如果带有with_children查询, 出于优化需要应自动过滤掉一些内容
-        if (self.request.query_params.get("with_children", "no") in ["yes", "count"] 
-            and self.request.query_params.get("parent", None) is None):
-            queryset = queryset.filter(parent=None)
         # 用于性能优化
         if self.select_related_fields:
             queryset = queryset.select_related(*self.select_related_fields)
         if self.prefetch_related_fields:
             queryset = queryset.prefetch_related(*self.prefetch_related_fields)
+        queryset = super().filter_queryset(queryset)
         return queryset
 
     def get_queryset(self):

@@ -35,7 +35,7 @@ class StandardItemViewSet(CustomModelViewSet):
     perms_map = {"get": "*", "post": "standard.update", "put": "standard.update", "delete": "standard.update"}
     queryset = StandardItem.objects.all()
     serializer_class = StandardItemSerializer
-    filterset_fields = ["standard", "id"]
+    filterset_fields = ["standard", "id", "number"]
     search_fields = ["number", "content"]
     ordering = ["standard", "cate",  "number"]
 
