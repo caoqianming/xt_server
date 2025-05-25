@@ -126,6 +126,8 @@ class AtaskItem(BaseModel):
     def cal_score(self, user):
         if self.standarditem.is_concern:
             self.score = self.standarditem.full_score - self.kill_score
+            if self.score < 0:
+                raise ParseError("扣分不得大于满分")
             self.checked = True
             self.check_user = user if self.check_user is None else self.check_user
             self.save()

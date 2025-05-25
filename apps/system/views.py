@@ -473,7 +473,7 @@ class UserViewSet(CustomModelViewSet):
             else:
                 raise ParseError(**PASSWORD_NOT_SAME)
         else:
-            raise ValidationError(**OLD_PASSWORD_WRONG)
+            raise ParseError(**OLD_PASSWORD_WRONG)
 
     @action(methods=['post'], detail=True, perms_map={'post': '*'}, serializer_class=Serializer)
     def reset_password(self, request, pk=None):
