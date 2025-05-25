@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from .models import TKS_DICT
 from apps.audit.service import daoru_standard
 from django.conf import settings
-from .filters import AtaskItemFilter
+from .filters import AtaskItemFilter, AtaskIssueFilter
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -170,12 +170,13 @@ class AtaskIssueViewSet(CustomModelViewSet):
     serializer_class = AtaskIssueSerializer
     select_related_fields = ["ataskitem", "ataskitem__atask", "ataskitem__standarditem", "create_by"]
     prefetch_related_fields = ["photos"]
-    filterset_fields = ["ataskitem", "ataskitem__atask"]
+    filterset_class = AtaskIssueFilter
 
     def get_queryset(self):
         if self.request.method == 'GET':
             if  (self.request.query_params.get("ataskitem", None) 
-                or self.request.query_params.get("ataskitem__atask", None)):
+                or self.request.query_params.get("ataskitem__atask", None)
+                or self.request.query_params.get("ataskitem_belong", None)):
                 pass
             else:
                 raise ParseError("缺少查询参数")

@@ -93,12 +93,27 @@ class AtaskIssueSerializer(CustomModelSerializer):
     ataskitem__standarditem__number = serializers.CharField(source="ataskitem.standarditem.number", read_only=True)
     create_by_name = serializers.CharField(source="create_by.name", read_only=True)
     photos_ = FileSerializer(many=True, read_only=True, source="photos")
+    atask = serializers.CharField(write_only=True)
+    standarditem = serializers.CharField(write_only=True)
     class Meta:
         model = AtaskIssue
         fields = "__all__"
         read_only_fields = EXCLUDE_FIELDS_BASE
+        extra_kwargs = {
+            "ataskitem": {"required": False}
+        }
 
     def create(self, validated_data):
+        if "ataskitem" in validated_data:
+            pass
+        elif "atask" in validated_data and "standarditem" in validated_data:
+            try:
+                ataskitem:AtaskItem = AtaskItem.objects.get(atask__id=validated_data["atask"], standarditem__id=validated_data["standarditem"])
+            except Exception:
+                raise ParseError("未找到对应审计项")
+            validated_data["ataskitem"] = ataskitem
+            validated_data.pop("atask")
+            validated_data.pop("standarditem")
         ataskitem:AtaskItem = validated_data["ataskitem"]
         ataskitem.atask.check_do()
         return super().create(validated_data)
