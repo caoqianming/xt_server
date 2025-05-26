@@ -237,7 +237,7 @@ class ComplexQueryMixin:
         sr.is_valid(raise_exception=True)
         vdata = sr.validated_data
         queryset = self.get_queryset()
-        querys = vdata.get('query', [])
+        querys = vdata.get('querys', [])
         if not querys:
             new_qs = queryset
         else:
