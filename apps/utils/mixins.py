@@ -16,6 +16,8 @@ from rest_framework.generics import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from apps.utils.serializers import PkSerializer
+from rest_framework.decorators import action
+from apps.utils.serializers import ComplexSerializer
 
 # 实例化myLogger
 myLogger = logging.getLogger('log')
@@ -219,6 +221,47 @@ class CustomListModelMixin(ListModelMixin):
         """
         return data
 
+
+class ComplexQueryMixin:
+    """复杂查询
+    """
+
+    @swagger_auto_schema(request_body=ComplexSerializer, responses={200: {}})
+    @action(methods=['post'], detail=False, perms_map={'post': '*'})
+    def cquery(self, request):
+        """复杂查询
+
+        复杂查询
+        """
+        sr = ComplexSerializer(data=request.data)
+        sr.is_valid(raise_exception=True)
+        vdata = sr.validated_data
+        queryset = self.filter_queryset(self.get_queryset())
+        new_qs = queryset.none()
+        try:
+            for m in vdata.get('querys', []):
+                one_qs = queryset
+                for n in m:
+                    st = {}
+                    if n['compare'] == '!':  # 如果是排除比较式
+                        st[n['field']] = n['value']
+                        one_qs = one_qs.exclude(**st)
+                    elif n['compare'] == '':
+                        st[n['field']] = n['value']
+                        one_qs = one_qs.filter(**st)
+                    else:
+                        st[n['field'] + '__' + n['compare']] = n['value']
+                        one_qs = one_qs.filter(**st)
+                new_qs = new_qs | one_qs
+        except Exception as e:
+            raise ParseError(str(e))
+        page = self.paginate_queryset(new_qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(new_qs, many=True)
+        return Response(serializer.data)
+    
 class MyLoggingMixin(object):
     """Mixin to log requests"""
 
