@@ -236,25 +236,34 @@ class ComplexQueryMixin:
         sr = ComplexSerializer(data=request.data)
         sr.is_valid(raise_exception=True)
         vdata = sr.validated_data
-        queryset = self.filter_queryset(self.get_queryset())
-        new_qs = queryset.none()
-        try:
-            for m in vdata.get('querys', []):
-                one_qs = queryset
-                for n in m:
-                    st = {}
-                    if n['compare'] == '!':  # 如果是排除比较式
-                        st[n['field']] = n['value']
-                        one_qs = one_qs.exclude(**st)
-                    elif n['compare'] == '':
-                        st[n['field']] = n['value']
-                        one_qs = one_qs.filter(**st)
-                    else:
-                        st[n['field'] + '__' + n['compare']] = n['value']
-                        one_qs = one_qs.filter(**st)
-                new_qs = new_qs | one_qs
-        except Exception as e:
-            raise ParseError(str(e))
+        queryset = self.get_queryset()
+        querys = vdata.get('query', [])
+        if not querys:
+            new_qs = queryset
+        else:
+            new_qs = queryset.none()
+            try:
+                for m in querys:
+                    one_qs = queryset
+                    for n in m:
+                        st = {}
+                        if n['compare'] == '!':  # 如果是排除比较式
+                            st[n['field']] = n['value']
+                            one_qs = one_qs.exclude(**st)
+                        elif n['compare'] == '':
+                            st[n['field']] = n['value']
+                            one_qs = one_qs.filter(**st)
+                        else:
+                            st[n['field'] + '__' + n['compare']] = n['value']
+                            one_qs = one_qs.filter(**st)
+                    new_qs = new_qs | one_qs
+            except Exception as e:
+                raise ParseError(str(e))
+        ordering = vdata.get('ordering', None)
+        if not ordering:
+            ordering = getattr(self, 'ordering', None)
+        if ordering:
+            new_qs = new_qs.order_by(*ordering.split(','))
         page = self.paginate_queryset(new_qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
