@@ -262,8 +262,10 @@ class ComplexQueryMixin:
         ordering = vdata.get('ordering', None)
         if not ordering:
             ordering = getattr(self, 'ordering', None)
+        if isinstance(ordering, str):
+            ordering = ordering.split(',')
         if ordering:
-            new_qs = new_qs.order_by(*ordering.split(','))
+            new_qs = new_qs.order_by(*ordering)
         page = self.paginate_queryset(new_qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
