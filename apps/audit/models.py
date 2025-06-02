@@ -42,7 +42,7 @@ class StandardItem(BaseModel):
     R_HIGH = 30
     R_VH = 40
     standard = models.ForeignKey(Standard, verbose_name="关联审计标准", on_delete=models.CASCADE)
-    cate = models.PositiveSmallIntegerField("大类", choices=((10, "基础部分"), (20, "现场部分")))
+    # cate = models.PositiveSmallIntegerField("大类", choices=((10, "基础部分"), (20, "现场部分")))
     number = models.CharField('条款号', max_length=100)
     level = models.PositiveSmallIntegerField("条款等级", 
                 default=L_1, choices=((L_1, "一级"), (L_2, "二级"), (L_3, "三级")), null=True, blank=True)
@@ -100,6 +100,18 @@ class Atask(CommonADModel):
     def check_do(self):
         if self.state != Atask.S_DOING:
             raise ParseError("该任务状态下不可操作")
+        
+    def init(self):
+        for st in StandardItem.objects.filter(standard=self.standard).order_by("number"):
+            checked = None
+            is_suit = None
+            kill_score = None
+            if st.is_concern:
+                checked = False
+                is_suit = True
+                kill_score = 0
+            AtaskItem.objects.get_or_create(atask=self, standarditem=st, defaults={"checked": checked, 
+                                                                                  "is_suit": is_suit, "kill_score": kill_score, "score": st.full_score})
 
 class AtaskTeam(BaseModel):
     atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, related_name="team_atask")
@@ -154,8 +166,9 @@ class AtaskIssue(CommonADModel):
     """
     create_by即为检查人
     """
-    ataskitem = models.ForeignKey(AtaskItem, verbose_name="关联审计条款", on_delete=models.CASCADE)
-    content = models.TextField('问题内容')
+    atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, null=True, blank=True)
+    standarditem = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", on_delete=models.CASCADE, null=True, blank=True)
+    content = models.TextField('问题内容', null=True, blank=True)
     photos = models.ManyToManyField(File, verbose_name="问题照片", blank=True)
     note = models.TextField('备注', null=True, blank=True)
 

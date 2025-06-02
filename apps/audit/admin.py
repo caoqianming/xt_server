@@ -36,4 +36,4 @@ class AtaskItemAdmin(admin.ModelAdmin):
 
 @admin.register(AtaskIssue)
 class AtaskIssueAdmin(admin.ModelAdmin):
-    list_display = ["id", "ataskitem", "content"]
+    list_display = ["id", "atask", "standarditem", "content"]

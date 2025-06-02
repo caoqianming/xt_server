@@ -82,39 +82,56 @@ class AtaskItemSerializer(CustomModelSerializer):
         fields = "__all__"
 
 class AtaskItemCheckSerializer(CustomModelSerializer):
+    cur_kill = serializers.IntegerField(write_only=True)
     class Meta:
         model = AtaskItem
-        fields = ["id", "is_suit", "note", "kill_score", "score"]
+        fields = ["id", "is_suit", "note", "cur_kill"]
         extra_kwars = {
-            "socre": {"read_only": True}
+            "socre": {"read_only": True},
+            "kill_score": {"read_only": True}
         }
+    def to_representation(self, instance):
+        return AtaskItemSerializer(instance).data
+    
+    def update(self, instance, validated_data):
+        ataskitem:AtaskItem = instance
+        cur_kil:int = validated_data.pop("cur_kill")
+        kill_score:int = ataskitem.kill_score + cur_kil
+        if kill_score > ataskitem.standarditem.full_score:
+            raise ParseError("扣分不能大于总分")
+        validated_data["kill_score"] = kill_score
+        return super().update(instance, validated_data)
 
 class AtaskIssueSerializer(CustomModelSerializer):
-    ataskitem__standarditem__number = serializers.CharField(source="ataskitem.standarditem.number", read_only=True)
+    standarditem_number = serializers.CharField(source="standarditem.number", read_only=True)
+    standarditem_standard = serializers.CharField(source="standarditem.standard", read_only=True)
     create_by_name = serializers.CharField(source="create_by.name", read_only=True)
     photos_ = FileSerializer(many=True, read_only=True, source="photos")
-    atask = serializers.CharField(write_only=True)
-    standarditem = serializers.CharField(write_only=True)
     class Meta:
         model = AtaskIssue
         fields = "__all__"
         read_only_fields = EXCLUDE_FIELDS_BASE
-        extra_kwargs = {
-            "ataskitem": {"required": False}
+        extra_kwars = {
+            "atask": {"required": True}
         }
 
-    def create(self, validated_data):
-        if "ataskitem" in validated_data:
-            pass
-        elif "atask" in validated_data and "standarditem" in validated_data:
-            try:
-                ataskitem:AtaskItem = AtaskItem.objects.get(atask__id=validated_data["atask"], standarditem__id=validated_data["standarditem"])
-            except Exception:
-                raise ParseError("未找到对应审计项")
-            validated_data["ataskitem"] = ataskitem
-            validated_data.pop("atask")
-            validated_data.pop("standarditem")
-        ataskitem:AtaskItem = validated_data["ataskitem"]
-        ataskitem.atask.check_do()
-        return super().create(validated_data)
+    def validate(self, attrs):
+        if "atask" not in attrs or attrs["atask"] is None:
+            raise ParseError("未找到审计任务")
+        return super().validate(attrs)
+    
+    # def create(self, validated_data):
+    #     if "ataskitem" in validated_data:
+    #         pass
+    #     elif "atask" in validated_data and "standarditem" in validated_data:
+    #         try:
+    #             ataskitem:AtaskItem = AtaskItem.objects.get(atask__id=validated_data["atask"], standarditem__id=validated_data["standarditem"])
+    #         except Exception:
+    #             raise ParseError("未找到对应审计项")
+    #         validated_data["ataskitem"] = ataskitem
+    #         validated_data.pop("atask")
+    #         validated_data.pop("standarditem")
+    #     ataskitem:AtaskItem = validated_data["ataskitem"]
+    #     ataskitem.atask.check_do()
+    #     return super().create(validated_data)
     
