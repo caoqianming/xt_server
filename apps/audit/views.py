@@ -57,7 +57,14 @@ class CompanyViewSet(CustomModelViewSet):
                 types_name += TKS_DICT[typei] + "/"
             item["types_name"] = types_name
         return data
-
+    
+    def destroy(self, request, *args, **kwargs):
+        ins:Company = self.get_object()
+        if Atask.objects.filter(company=ins).exists():
+            raise ParseError("该公司存在审计任务，无法删除")
+        if Company.objects.filter(parent=ins).exists():
+            raise ParseError("该公司存在子公司，无法删除")
+        return super().destroy(request, *args, **kwargs)
 class AtaskViewSet(CustomModelViewSet):
     perms_map = {"get": "*", "post": "atask.create", "put": "atask.update", "delete": "atask.delete"}
     queryset = Atask.objects.all()
@@ -186,18 +193,19 @@ class AtaskIssueViewSet(CustomModelViewSet):
                 raise ParseError("缺少查询参数")
         return super().get_queryset()
 
-    def update(self, request, *args, **kwargs):
+    def check_perm(self, ins:AtaskIssue):
         ins:AtaskIssue = self.get_object()
         atask:Atask = ins.atask
         atask.check_do()
-        print(self.request.user, ins.create_by)
         if ins.create_by == self.request.user or ins.create_by == atask.leader:
             pass
         else:
             raise ParseError("仅创建人/负责人可修改")
+        
+    def update(self, request, *args, **kwargs):
+        self.check_perm(ins=self.get_object())
         return super().update(request, *args, **kwargs)
 
-    def perform_destroy(self, instance):
-        atask:Atask = instance.atask
-        atask.check_do()
-        return super().perform_destroy(instance)
+    def destroy(self, request, *args, **kwargs):
+        self.check_perm(ins=self.get_object())
+        return super().destroy(request, *args, **kwargs)
