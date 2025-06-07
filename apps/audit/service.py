@@ -2,7 +2,7 @@ from apps.audit.models import Standard, StandardItem
 from openpyxl import load_workbook
 
 def get_number_sort(number: str):
-    parts = number.split('.')
+    parts = str(number).split('.')
     return '.'.join([f"{int(part):03d}" for part in parts])
 
 def daoru_standard(path: str, sta: Standard):
