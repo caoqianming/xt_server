@@ -1,6 +1,10 @@
 from apps.audit.models import Standard, StandardItem
 from openpyxl import load_workbook
 
+def get_number_sort(number: str):
+    parts = number.split('.')
+    return '.'.join([f"{int(part):03d}" for part in parts])
+
 def daoru_standard(path: str, sta: Standard):
     wb = load_workbook(path)
     current_item1 = None
@@ -37,6 +41,9 @@ def daoru_standard(path: str, sta: Standard):
                     "level": 10,
                 }
             )
+            if x1.number_sort is None:
+                x1.number_sort = get_number_sort(number1)
+                x1.save(update_fields=["number_sort"])
             if current_item1:
                 current_item1.full_score = current_item1_score
                 current_item1.save()
@@ -53,6 +60,9 @@ def daoru_standard(path: str, sta: Standard):
                     "method": share_method
                 }
             )
+            if x2.number_sort is None:
+                x2.number_sort = get_number_sort(number2)
+                x2.save(update_fields=["number_sort"])
             if current_item2:
                 current_item2.full_score = current_item2_score
                 current_item2.save()
@@ -72,6 +82,9 @@ def daoru_standard(path: str, sta: Standard):
                         "full_score": full_score
                     }
                 )
+            if current_item3.number_sort is None:
+                current_item3.number_sort = get_number_sort(number3)
+                current_item3.save(update_fields=["number_sort"])
             if full_score:
                 current_item2_score += full_score
                 current_item1_score += full_score

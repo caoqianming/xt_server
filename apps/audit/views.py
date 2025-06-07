@@ -37,7 +37,7 @@ class StandardItemViewSet(CustomModelViewSet):
     serializer_class = StandardItemSerializer
     filterset_fields = ["standard", "id", "number"]
     search_fields = ["number", "content"]
-    ordering = ["standard", "number"]
+    ordering = ["standard", "number_sort"]
 
 class CompanyViewSet(CustomModelViewSet):
     queryset = Company.objects.all()
@@ -143,7 +143,7 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
     update_serializer_class = AtaskItemCheckSerializer
     select_related_fields = ["atask", "standarditem"]
     filterset_class = AtaskItemFilter
-    ordering = ["atask", "standarditem__number"]
+    ordering = ["atask", "standarditem__number_sort"]
 
     def add_info_for_list(self, data):
         if isinstance(data, list):

@@ -44,6 +44,7 @@ class StandardItem(BaseModel):
     standard = models.ForeignKey(Standard, verbose_name="关联审计标准", on_delete=models.CASCADE)
     # cate = models.PositiveSmallIntegerField("大类", choices=((10, "基础部分"), (20, "现场部分")))
     number = models.CharField('条款号', max_length=100)
+    number_sort = models.CharField('排序号', null=True, blank=True)
     level = models.PositiveSmallIntegerField("条款等级", 
                 default=L_1, choices=((L_1, "一级"), (L_2, "二级"), (L_3, "三级")), null=True, blank=True)
     risk_level = models.PositiveSmallIntegerField("风险等级", 
