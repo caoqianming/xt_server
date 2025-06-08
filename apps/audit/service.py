@@ -135,17 +135,17 @@ def daoru_issue(path:str, atask: Atask, user):
     ws = wb["Sheet1"]
     i = 3
     while ws[f'b{i}'].value:
-        standitem = st_dict.get(ws[f'b{i}'].value, None)
+        standarditem = st_dict.get(ws[f'b{i}'].value, None)
         number = ws[f'a{i}'].value
         content = ws[f'c{i}'].value
         kill_store = int(ws[f'd{i}'].value)
         if not number:
             raise ParseError(f"{i}行-问题编号不存在")
-        if standitem is None:
+        if standarditem is None:
             raise ParseError(f"{i}行-标准项不存在")
         AtaskIssue.objects.get_or_create(
             number = number,
-            standitem = standitem,
+            standarditem = standarditem,
             atask = atask,
             defaults={
                 "content": content,
