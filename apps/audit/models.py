@@ -174,6 +174,7 @@ class AtaskIssue(CommonADModel):
     photos = models.ManyToManyField(File, verbose_name="问题照片", blank=True)
     note = models.TextField('备注', null=True, blank=True)
     kill_score = models.PositiveSmallIntegerField("扣分", null=True, blank=True)
+    number = models.TextField("问题编号", null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '审计问题'

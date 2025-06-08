@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework.response import Response
 from .models import TKS_DICT
-from apps.audit.service import daoru_standard
+from apps.audit.service import daoru_standard, daoru_issue
 from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
 # Create your views here.
@@ -183,6 +183,18 @@ class AtaskIssueViewSet(CustomModelViewSet):
     prefetch_related_fields = ["photos"]
     filterset_class = AtaskIssueFilter
 
+    @action(methods=['post'], detail=True, perms_map={'post': 'ataskissue.update'})
+    @transaction.atomic
+    def daoru(self, request, *args, **kwargs):
+        path = request.data.get("path", "")
+        ataskId = request.data.get("atask", "")
+        create_by = request.user
+        atask = Atask.objects.get(id=ataskId)
+        if path:
+            daoru_issue(settings.BASE_DIR + path, atask, create_by)
+            return Response()
+        raise ParseError("缺少path参数")
+    
     def get_queryset(self):
         if self.request.method == 'GET':
             if  (self.request.query_params.get("atask", None) 

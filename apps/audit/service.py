@@ -1,5 +1,6 @@
-from apps.audit.models import Standard, StandardItem
+from apps.audit.models import Standard, StandardItem, Atask, AtaskIssue
 from openpyxl import load_workbook
+from rest_framework.exceptions import ParseError
 
 def get_number_sort(number: str):
     parts = str(number).split('.')
@@ -123,3 +124,33 @@ def daoru_standard(path: str, sta: Standard):
     sta.total_score = total_score
     sta.save()
     return sta
+
+def daoru_issue(path:str, atask: Atask, user):
+    standarditems = StandardItem.objects.filter(standard=atask.standard, level=30)
+    st_dict = {}
+    for item in standarditems:
+        st_dict[item.number] = item
+
+    wb = load_workbook(path)
+    ws = wb["Sheet1"]
+    i = 3
+    while ws[f'b{i}'].value:
+        standitem = st_dict.get(ws[f'b{i}'].value, None)
+        number = ws[f'a{i}'].value
+        content = ws[f'c{i}'].value
+        kill_store = int(ws[f'd{i}'].value)
+        if not number:
+            raise ParseError(f"{i}行-问题编号不存在")
+        if standitem is None:
+            raise ParseError(f"{i}行-标准项不存在")
+        AtaskIssue.objects.get_or_create(
+            number = number,
+            standitem = standitem,
+            atask = atask,
+            defaults={
+                "content": content,
+                "kill_store": kill_store,
+                "create_by": user
+            }
+        )
+
