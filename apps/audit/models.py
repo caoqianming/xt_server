@@ -65,6 +65,7 @@ class Company(CommonADModel):
     level = models.PositiveSmallIntegerField("公司级别", choices=((C_GROUP, "集团"), (C_AREA, "区域"), (C_COMPANY, "公司")))
     parent = models.ForeignKey('self', verbose_name="上级", on_delete=models.CASCADE, null=True, blank=True)
     types = models.JSONField('类型', default=list, blank=True, null=True)
+    email = models.EmailField('联系邮箱', null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '受审计单位'
