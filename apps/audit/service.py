@@ -153,4 +153,5 @@ def daoru_issue(path:str, atask: Atask, user):
                 "create_by": user
             }
         )
+        i = i + 1
 
