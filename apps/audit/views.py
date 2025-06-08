@@ -183,7 +183,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
     prefetch_related_fields = ["photos"]
     filterset_class = AtaskIssueFilter
 
-    @action(methods=['post'], detail=True, perms_map={'post': 'ataskissue.update'})
+    @action(methods=['post'], detail=False, perms_map={'post': 'ataskissue.update'})
     @transaction.atomic
     def daoru(self, request, *args, **kwargs):
         path = request.data.get("path", "")
