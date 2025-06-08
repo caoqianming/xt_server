@@ -138,7 +138,7 @@ def daoru_issue(path:str, atask: Atask, user):
         standarditem = st_dict.get(ws[f'b{i}'].value, None)
         number = ws[f'a{i}'].value
         content = ws[f'c{i}'].value
-        kill_store = int(ws[f'd{i}'].value)
+        kill_score = int(ws[f'd{i}'].value)
         if not number:
             raise ParseError(f"{i}行-问题编号不存在")
         if standarditem is None:
@@ -149,7 +149,7 @@ def daoru_issue(path:str, atask: Atask, user):
             atask = atask,
             defaults={
                 "content": content,
-                "kill_store": kill_store,
+                "kill_score": kill_score,
                 "create_by": user
             }
         )
