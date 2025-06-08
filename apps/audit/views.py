@@ -179,7 +179,7 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
 class AtaskIssueViewSet(CustomModelViewSet):
     queryset = AtaskIssue.objects.all()
     serializer_class = AtaskIssueSerializer
-    select_related_fields = ["atask", "standarditem", "create_by"]
+    select_related_fields = ["atask", "standarditem", "create_by", "atask__standard"]
     prefetch_related_fields = ["photos"]
     filterset_class = AtaskIssueFilter
 

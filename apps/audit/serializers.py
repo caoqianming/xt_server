@@ -103,6 +103,7 @@ class AtaskItemCheckSerializer(CustomModelSerializer):
         return super().update(instance, validated_data)
 
 class AtaskIssueSerializer(CustomModelSerializer):
+    standard = serializers.CharField(source="atask.standard.id", read_only=True)
     standarditem_number = serializers.CharField(source="standarditem.number", read_only=True)
     standarditem_standard = serializers.CharField(source="standarditem.standard", read_only=True)
     create_by_name = serializers.CharField(source="create_by.name", read_only=True)
