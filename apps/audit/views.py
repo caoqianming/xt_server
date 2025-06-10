@@ -182,6 +182,8 @@ class AtaskIssueViewSet(CustomModelViewSet):
     select_related_fields = ["atask", "standarditem", "create_by", "atask__standard"]
     prefetch_related_fields = ["photos"]
     filterset_class = AtaskIssueFilter
+    ordering_fields = ["atask", "standarditem__number_sort", "create_time"]
+    ordering = ["atask", "standarditem__number_sort", "-create_time"]
 
     @action(methods=['post'], detail=False, perms_map={'post': 'ataskissue.update'})
     @transaction.atomic
