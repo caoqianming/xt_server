@@ -1,6 +1,9 @@
 from apps.audit.models import Standard, StandardItem, Atask, AtaskIssue
 from openpyxl import load_workbook
 from rest_framework.exceptions import ParseError
+from django.core.mail import EmailMessage
+from apps.system.models import User
+import re
 
 def get_number_sort(number: str):
     parts = str(number).split('.')
@@ -134,8 +137,10 @@ def daoru_issue(path:str, atask: Atask, user):
     wb = load_workbook(path)
     ws = wb["Sheet1"]
     i = 3
+    cal_sitem = []
     while ws[f'b{i}'].value:
-        standarditem = st_dict.get(ws[f'b{i}'].value, None)
+        standarditem:StandardItem = st_dict.get(ws[f'b{i}'].value, None)
+        cal_sitem.append(standarditem)
         number = ws[f'a{i}'].value
         content = ws[f'c{i}'].value
         kill_score = int(ws[f'd{i}'].value)
@@ -155,3 +160,30 @@ def daoru_issue(path:str, atask: Atask, user):
         )
         i = i + 1
 
+    if cal_sitem:
+        for item in cal_sitem:
+            AtaskIssue.cal(atask, item)
+
+
+def sendMail(atask:Atask):
+    team = atask.team
+    to = []
+
+    def is_valid_email(email):
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return bool(re.match(pattern, email))
+    
+    for m in team:
+       user:User = m.member
+       mail = user.username
+       if is_valid_email(mail):
+           to.append(mail)
+    if is_valid_email(atask.company.email):
+        to.append(atask.company.email)
+
+    email = EmailMessage(
+        subject=f"【{atask.company.name}】审核任务",
+        body=f"【{atask.company.name}】审核任务",
+        to=to
+    )
+    email.send()

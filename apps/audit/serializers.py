@@ -136,3 +136,25 @@ class AtaskIssueSerializer(CustomModelSerializer):
     #     ataskitem.atask.check_do()
     #     return super().create(validated_data)
     
+class AtaskIssueExportSerializer(CustomModelSerializer):
+    standarditem_number = serializers.CharField(source="standarditem.number", read_only=True)
+    create_by_name = serializers.CharField(source="create_by.name", read_only=True)
+    risk_level_display = serializers.SerializerMethodField()
+    level_10_name = serializers.SerializerMethodField()
+    class Meta:
+        model = AtaskIssue
+        fields = "__all__"
+    
+    def get_risk_level_display(self, obj):
+        if obj.standarditem:  # 检查外键是否存在
+            return obj.standarditem.get_risk_level_display()
+        return None
+
+    def get_level_10_name(self, obj):
+        standitem = obj.standarditem
+        if standitem:
+            p_stand:StandardItem = standitem.parent
+            if p_stand.level == StandardItem.L_1:
+                return p_stand.content
+            elif p_stand.level == StandardItem.L_2:
+                return p_stand.parent.content

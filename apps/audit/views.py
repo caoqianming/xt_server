@@ -4,15 +4,18 @@ from apps.utils.viewsets import CustomModelViewSet, CustomGenericViewSet
 from apps.audit.models import (Standard, StandardItem, Company, Atask, AtaskIssue, AtaskTeam, AtaskItem)
 from apps.audit.serializers import (AtaskItemSerializer, StandardSerializer, StandardItemSerializer, 
                                     CompanySerializer, AtaskSerializer, AtaskTeamSerializer,
-                                    AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer)
+                                    AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer, AtaskIssueExportSerializer)
 from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework.response import Response
 from .models import TKS_DICT
-from apps.audit.service import daoru_standard, daoru_issue
+from apps.audit.service import daoru_standard, daoru_issue, sendMail
 from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
+from rest_framework import serializers
+from apps.utils.export import export_excel
+from apps.utils.thread import MyThread
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -117,8 +120,8 @@ class AtaskViewSet(CustomModelViewSet):
         ins:Atask = self.get_object()
         if ins.state != Atask.S_WAIT:
             raise ParseError("该任务已开始,禁止删除")
-        if AtaskIssue.objects.filter(atask=self.get_object()).exists():
-            raise ParseError("该任务下已存在审计数据,禁止删除")
+        # if AtaskIssue.objects.filter(atask=self.get_object()).exists():
+        #     raise ParseError("该任务下已存在审计数据,禁止删除")
         return super().destroy(request, *args, **kwargs)
     
     @action(methods=['put'], detail=True, perms_map={'post': "atask.update"})
@@ -136,6 +139,14 @@ class AtaskViewSet(CustomModelViewSet):
         #     raise ParseError("该任务未开始,请勿重复操作")
         ins.state = state
         ins.save()
+        return Response()
+    
+    @action(methods=['post'], detail=True, perms_map={'post': "atask.update"})
+    @transaction.atomic
+    def send_mail(self, request, *args, **kwargs):
+        """发送通知邮件"""
+        ins:Atask = self.get_object()
+        sendMail(ins)
         return Response()
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
@@ -185,6 +196,11 @@ class AtaskIssueViewSet(CustomModelViewSet):
     ordering_fields = ["atask", "standarditem__number_sort", "create_time"]
     ordering = ["atask", "standarditem__number_sort", "-create_time"]
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        ins:AtaskIssue = serializer.save()
+        AtaskIssue.cal_ataskitem_score(ins.atask, ins.create_by, ins.standarditem,None,ins.kill_score,None)
+    
     @action(methods=['post'], detail=False, perms_map={'post': 'ataskissue.update'})
     @transaction.atomic
     def daoru(self, request, *args, **kwargs):
@@ -216,10 +232,43 @@ class AtaskIssueViewSet(CustomModelViewSet):
         else:
             raise ParseError("仅创建人/负责人可修改")
         
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
-        self.check_perm(ins=self.get_object())
-        return super().update(request, *args, **kwargs)
+        ins:AtaskIssue = self.get_object()
+        old_kill_score, old_standarditem = ins.kill_score, ins.standarditem
+        self.check_perm(ins)
+        res = super().update(request, *args, **kwargs)
+        AtaskIssue.cal_ataskitem_score(ins.atask, ins.update_by, ins.standarditem, old_kill_score, ins.kill_score, old_standarditem)
+        return res
 
     def destroy(self, request, *args, **kwargs):
-        self.check_perm(ins=self.get_object())
-        return super().destroy(request, *args, **kwargs)
+        ins:AtaskIssue = self.get_object()
+        old_standarditem, atask, user = ins.standarditem, ins.atask, ins.create_by
+        self.check_perm(ins)
+        res = super().destroy(request, *args, **kwargs)
+        AtaskIssue.cal_ataskitem_score(atask, user, None, old_standarditem, None, None)
+        return res
+    
+    @action(methods=['get'], detail=False, perms_map={'get': '*'},
+            serializer_class=serializers.Serializer)
+    def export_excel(self, request, pk=None):
+        """导出excel
+        导出excel
+        """
+        field_data = ['一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人']
+        queryset = self.filter_queryset(self.get_queryset())
+        if queryset.count() > 1000:
+            raise ParseError('数据量超过1000,请筛选后导出')
+        odata = AtaskIssueExportSerializer(queryset, many=True).data
+        # 处理数据
+        data = []
+        for i in odata:
+            data.append(
+                [[i['level_10_name']],
+                 i['standarditem_number'],
+                 i['content'],
+                 i.get('risk_level_display', None),
+                 i["kill_score"],
+                 i["create_by_name"]]
+            )
+        return Response({'path': export_excel(field_data, data, '问题清单')})

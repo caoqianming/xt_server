@@ -138,30 +138,41 @@ class AtaskItem(BaseModel):
         verbose_name = verbose_name_plural = '审计条款'
 
     def cal_score(self, user):
+        ataskitem_qs = AtaskItem.objects.filter(atask=self.atask)
         if self.standarditem.is_concern:
             self.score = self.standarditem.full_score - self.kill_score
             if self.score < 0:
-                raise ParseError("扣分不得大于满分")
+                self.score = 0
             self.checked = True
             self.check_user = user if self.check_user is None else self.check_user
             self.save()
             if self.standarditem.level == 30:
-                l_20 = AtaskItem.objects.get(standarditem=self.standarditem.parent)
-                l_20.kill_score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('kill_score'))['kill_score__sum']
-                l_20.score = AtaskItem.objects.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('score'))['score__sum']
+                l_20 = ataskitem_qs.get(standarditem=self.standarditem.parent)
+                l_20.kill_score = ataskitem_qs.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('kill_score'))['kill_score__sum']
+                l_20.score = ataskitem_qs.filter(standarditem__parent=self.standarditem.parent).aggregate(Sum('score'))['score__sum']
                 l_20.checked = True
                 l_20.save(update_fields=["kill_score", "score", "checked"])
-                l_10 = AtaskItem.objects.get(standarditem=l_20.standarditem.parent)
+                l_10 = ataskitem_qs.get(standarditem=l_20.standarditem.parent)
             elif self.standarditem.level == 20:
-                l_10 = AtaskItem.objects.get(standarditem=self.standarditem.parent)
-            l_10.kill_score = AtaskItem.objects.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('kill_score'))['kill_score__sum']
-            l_10.score = AtaskItem.objects.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('score'))['score__sum']
+                l_10 = ataskitem_qs.get(standarditem=self.standarditem.parent)
+            l_10.kill_score = ataskitem_qs.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('kill_score'))['kill_score__sum']
+            l_10.score = ataskitem_qs.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('score'))['score__sum']
             l_10.checked = True
             l_10.save(update_fields=["kill_score", "score", "checked"])
-            self.atask.score = AtaskItem.objects.filter(atask=self.atask, standarditem__is_concern=True).aggregate(Sum('score'))['score__sum']
+            self.atask.score = ataskitem_qs.filter(standarditem__is_concern=True).aggregate(Sum('score'))['score__sum']
             self.atask.save(update_fields=["score"])
         else:
-            raise ParseError("该条款非扣分项,无需编辑")
+            self.checked = True
+            self.check_user = user if self.check_user is None else self.check_user
+            self.save()
+            standarditem_p:StandardItem = self.standarditem.parent
+            if standarditem_p.is_concern:
+                ataskitem = ataskitem_qs.get(standarditem=standarditem_p)
+                ataskitem.kill_score = ataskitem_qs.filter(standarditem__parent=standarditem_p).aggregate(Sum('kill_score'))['kill_score__sum'] or 0
+                ataskitem.save(update_fields=["kill_score"])
+                return ataskitem.cal_score(user)
+            else:
+                raise ParseError("找不到上级审计条款")
         
 
 class AtaskIssue(CommonADModel):
@@ -178,3 +189,30 @@ class AtaskIssue(CommonADModel):
 
     class Meta:
         verbose_name = verbose_name_plural = '审计问题'
+
+    @classmethod
+    def cal(cls, atask:Atask, user:User, standarditem:StandardItem):
+        try:
+            ataskitem = AtaskItem.objects.get(atask=atask, standarditem=standarditem)
+        except Exception as e:
+            raise ParseError(f"找不到该审计条款-{str(e)}")
+        kill_score_all = AtaskIssue.objects.filter(atask=atask, standarditem=standarditem).aggregate(Sum('kill_score'))['kill_score__sum'] or 0
+        ataskitem.kill_score = kill_score_all
+        ataskitem.save(update_fields=["kill_score"])
+        ataskitem.cal_score(user)
+
+    @classmethod
+    def cal_ataskitem_score(cls, atask:Atask, user:User, 
+                            new_standarditem:StandardItem=None, 
+                            old_standarditem:StandardItem=None,
+                            new_kill_score=None, old_kill_score=None):
+        if new_kill_score == old_kill_score and old_standarditem == new_standarditem:
+            # 此时不用处理
+            pass
+        elif new_standarditem is not None and old_standarditem is not None and new_standarditem == old_standarditem:
+            cls.cal(atask, user, new_standarditem)
+        elif new_standarditem is not None:
+            cls.cal(atask, user, new_standarditem)
+        elif old_standarditem is not None:
+            cls.cal(atask, user, old_standarditem)
+            
