@@ -233,21 +233,33 @@ class AtaskIssueViewSet(CustomModelViewSet):
             raise ParseError("仅创建人/负责人可修改")
         
     @transaction.atomic
-    def update(self, request, *args, **kwargs):
-        ins:AtaskIssue = self.get_object()
+    def perform_update(self, serializer):
+        ins = self.get_object()
         old_kill_score, old_standarditem = ins.kill_score, ins.standarditem
+        
+        # 先检查权限
         self.check_perm(ins)
-        res = super().update(request, *args, **kwargs)
-        AtaskIssue.cal_ataskitem_score(ins.atask, ins.update_by, ins.standarditem, old_kill_score, ins.kill_score, old_standarditem)
-        return res
+        
+        # 执行原始更新操作
+        super().perform_update(serializer)
+        
+        # 刷新实例并执行后续操作
+        ins = AtaskIssue.objects.get(id=ins.id)
+        AtaskIssue.cal_ataskitem_score(
+            ins.atask, 
+            ins.update_by, 
+            ins.standarditem, 
+            old_kill_score, 
+            ins.kill_score, 
+            old_standarditem
+        )
 
-    def destroy(self, request, *args, **kwargs):
-        ins:AtaskIssue = self.get_object()
-        old_standarditem, atask, user = ins.standarditem, ins.atask, ins.create_by
-        self.check_perm(ins)
-        res = super().destroy(request, *args, **kwargs)
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        self.check_perm(instance)
+        old_standarditem, atask, user = instance.standarditem, instance.atask, instance.create_by
+        super().perform_destroy(instance)
         AtaskIssue.cal_ataskitem_score(atask, user, None, old_standarditem, None, None)
-        return res
     
     @action(methods=['get'], detail=False, perms_map={'get': '*'},
             serializer_class=serializers.Serializer)
