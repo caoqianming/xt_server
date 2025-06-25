@@ -21,6 +21,7 @@ class AtaskIssueFilter(filters.FilterSet):
         fields = {
             "atask": ["exact"],
             "standarditem": ["exact"],
+            "create_by": ["exact"],
         }
 
     def filter_standarditem_belong(self, queryset, name, value):
