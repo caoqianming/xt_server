@@ -66,6 +66,9 @@ class Company(CommonADModel):
     parent = models.ForeignKey('self', verbose_name="上级", on_delete=models.CASCADE, null=True, blank=True)
     types = models.JSONField('类型', default=list, blank=True, null=True)
     email = models.EmailField('联系邮箱', null=True, blank=True)
+    address = models.CharField('地址', max_length=100, null=True, blank=True)
+    contact = models.CharField('联系人', max_length=100, null=True, blank=True)
+    phone = models.CharField('联系电话', max_length=100, null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '受审计单位'
@@ -81,6 +84,8 @@ class Atask(CommonADModel):
     state = models.PositiveSmallIntegerField("状态", 
             choices=((S_WAIT, "待开始"), (S_DOING, "进行中"), (S_DONE, "已完成")), default=S_WAIT)
     company = models.ForeignKey(Company, verbose_name="审计对象", on_delete=models.CASCADE)
+    start_date = models.DateField('开始日期', null=True, blank=True)
+    end_date = models.DateField('结束日期', null=True, blank=True)
     standard = models.ForeignKey(Standard, verbose_name="审计标准", on_delete=models.CASCADE)
     note = models.TextField('备注', null=True, blank=True)
     score = models.PositiveIntegerField("得分", null=True, blank=True)
