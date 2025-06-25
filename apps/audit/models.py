@@ -87,6 +87,7 @@ class Atask(CommonADModel):
     start_date = models.DateField('开始日期', null=True, blank=True)
     end_date = models.DateField('结束日期', null=True, blank=True)
     standard = models.ForeignKey(Standard, verbose_name="审计标准", on_delete=models.CASCADE)
+    notify_content = models.TextField('通知内容', null=True, blank=True)
     note = models.TextField('备注', null=True, blank=True)
     score = models.PositiveIntegerField("得分", null=True, blank=True)
 
