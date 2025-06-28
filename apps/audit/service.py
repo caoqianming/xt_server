@@ -29,7 +29,7 @@ def daoru_standard(path: str, sta: Standard):
         number2 = ws[f'c{i}'].value
         content2 = ws[f'd{i}'].value
         rlevel_str = ws[f'e{i}'].value.strip() if ws[f'e{i}'].value else None
-        rlevel = 20 if rlevel_str == "★" else 20 if rlevel_str == "★★" else 40 if rlevel_str == "★★★"  else 10
+        rlevel = 20 if rlevel_str == "★" else 30 if rlevel_str == "★★" else 40 if rlevel_str == "★★★"  else 10
         number3 = ws[f'f{i}'].value
         content3 = ws[f'g{i}'].value
 
