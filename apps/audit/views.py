@@ -15,7 +15,7 @@ from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
 from rest_framework import serializers
 from apps.utils.export import export_excel
-from apps.utils.thread import MyThread
+from apps.audit.m_ppt import export_pptx
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -148,6 +148,13 @@ class AtaskViewSet(CustomModelViewSet):
         ins:Atask = self.get_object()
         sendMail(ins)
         return Response()
+    
+    @action(methods=['get'], detail=True, perms_map={'get': '*'},
+            serializer_class=serializers.Serializer)
+    def export_pptx(self, request, pk=None):
+        """导出pptx"""
+        ins:Atask = self.get_object()
+        return Response({'path': export_pptx(ins, '安全审计总结')})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}
@@ -183,8 +190,15 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
         if self.request.query_params.get('atask', None):
             pass
         else:
-            raise ParseError("缺少查询参数")
+            return self.queryset.none()
         return super().list(request, *args, **kwargs)
+    
+    @action(methods=['get'], detail=False, perms_map={'get': '*'}, serializer_class=serializers.Serializer)
+    def related_ataskitem(self, request, *args, **kwargs):
+        data = request.data
+        standardItemId = data["standardItem"]
+
+
 
 
 class AtaskIssueViewSet(CustomModelViewSet):
@@ -220,7 +234,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
                 or self.request.query_params.get("standitem_belong", None)):
                 pass
             else:
-                raise ParseError("缺少查询参数")
+                return self.queryset.none()
         return super().get_queryset()
 
     def check_perm(self, ins:AtaskIssue):
