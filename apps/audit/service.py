@@ -168,7 +168,11 @@ def daoru_issue(path:str, atask: Atask, user):
 def sendMail(atask:Atask):
     team = atask.team
     to = []
-
+    content = atask.notify_content
+    if content:
+        pass
+    else:
+        raise ParseError("通知内容不能为空")
     def is_valid_email(email):
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return bool(re.match(pattern, email))
@@ -183,7 +187,7 @@ def sendMail(atask:Atask):
 
     email = EmailMessage(
         subject=f"【{atask.company.name}】审核任务",
-        body=f"【{atask.company.name}】审核任务",
+        body=content,
         to=to
     )
     email.send()
