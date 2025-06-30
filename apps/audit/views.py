@@ -180,11 +180,13 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
     
     @transaction.atomic
     def perform_update(self, serializer):
-        obj = self.get_object()
+        obj:AtaskItem = self.get_object()
+        if self.request.user != obj.atask.leader:
+            raise ParseError("仅组长可操作")
         if obj.atask.state != Atask.S_DOING:
             raise ParseError("该任务状态下不可操作")
         ins:AtaskItem = serializer.save()
-        ins.cal_score(self.request.user)
+        # ins.cal_score(self.request.user)
     
     def list(self, request, *args, **kwargs):
         if self.request.query_params.get('atask', None):
@@ -193,13 +195,13 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
             return self.queryset.none()
         return super().list(request, *args, **kwargs)
     
-    @action(methods=['get'], detail=False, perms_map={'get': '*'}, serializer_class=serializers.Serializer)
+    @action(methods=['post'], detail=False, perms_map={'post': '*'}, serializer_class=serializers.Serializer)
     def related_ataskitem(self, request, *args, **kwargs):
         data = request.data
         standarditem = StandardItem.objects.get(id=data.get("standarditem"))
         concern_item = standarditem.related_concern_item()
         if concern_item:
-            return Response(AtaskItemSerializer(concern_item).data)
+            return Response(AtaskItemSerializer(AtaskItem.objects.get(atask=data["atask"], standarditem=concern_item)).data)
         raise ParseError("未找到最小扣分项")
 
 
@@ -244,7 +246,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
         ins:AtaskIssue = self.get_object()
         atask:Atask = ins.atask
         atask.check_do()
-        if ins.create_by == self.request.user or ins.create_by == atask.leader:
+        if ins.create_by == self.request.user or self.request.user == atask.leader:
             pass
         else:
             raise ParseError("仅创建人/负责人可修改")

@@ -162,7 +162,7 @@ def daoru_issue(path:str, atask: Atask, user):
 
     if cal_sitem:
         for item in cal_sitem:
-            AtaskIssue.cal(atask, item)
+            AtaskIssue.cal(atask, user, item)
 
 
 def sendMail(atask:Atask):

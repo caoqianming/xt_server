@@ -82,25 +82,25 @@ class AtaskItemSerializer(CustomModelSerializer):
         fields = "__all__"
 
 class AtaskItemCheckSerializer(CustomModelSerializer):
-    cur_kill = serializers.IntegerField(write_only=True)
+    # cur_kill = serializers.IntegerField(write_only=True)
     class Meta:
         model = AtaskItem
-        fields = ["id", "is_suit", "note", "cur_kill"]
-        extra_kwars = {
-            "socre": {"read_only": True},
-            "kill_score": {"read_only": True}
-        }
+        fields = ["id", "is_suit", "note"]
+        # extra_kwars = {
+        #     "socre": {"read_only": True},
+        #     "kill_score": {"read_only": True}
+        # }
     def to_representation(self, instance):
         return AtaskItemSerializer(instance).data
     
-    def update(self, instance, validated_data):
-        ataskitem:AtaskItem = instance
-        cur_kil:int = validated_data.pop("cur_kill")
-        kill_score:int = ataskitem.kill_score + cur_kil
-        if kill_score > ataskitem.standarditem.full_score:
-            raise ParseError("扣分不能大于总分")
-        validated_data["kill_score"] = kill_score
-        return super().update(instance, validated_data)
+    # def update(self, instance, validated_data):
+    #     ataskitem:AtaskItem = instance
+    #     cur_kil:int = validated_data.pop("cur_kill")
+    #     kill_score:int = ataskitem.kill_score + cur_kil
+    #     if kill_score > ataskitem.standarditem.full_score:
+    #         raise ParseError("扣分不能大于总分")
+    #     validated_data["kill_score"] = kill_score
+    #     return super().update(instance, validated_data)
 
 class AtaskIssueSerializer(CustomModelSerializer):
     standard = serializers.CharField(source="atask.standard.id", read_only=True)
