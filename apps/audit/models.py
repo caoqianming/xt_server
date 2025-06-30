@@ -59,6 +59,14 @@ class StandardItem(BaseModel):
     class Meta:
         verbose_name = verbose_name_plural = '审计标准条款'
 
+    def related_concern_item(self):
+        if self.is_concern:
+            return self
+        else:
+            obj = self.parent
+            if obj.is_concern:
+                return obj
+            return None
 
 class Company(CommonADModel):
     name = models.CharField('名称', max_length=100)

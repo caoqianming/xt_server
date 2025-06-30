@@ -196,8 +196,11 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
     @action(methods=['get'], detail=False, perms_map={'get': '*'}, serializer_class=serializers.Serializer)
     def related_ataskitem(self, request, *args, **kwargs):
         data = request.data
-        standardItemId = data["standardItem"]
-
+        standarditem = StandardItem.objects.get(id=data.get("standarditem"))
+        concern_item = standarditem.related_concern_item()
+        if concern_item:
+            return Response(AtaskItemSerializer(concern_item).data)
+        raise ParseError("未找到最小扣分项")
 
 
 
