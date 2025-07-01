@@ -123,6 +123,7 @@ class TicketListSerializer(CustomModelSerializer):
     workflow_ = WorkflowSimpleSerializer(source='workflow', read_only=True)
     state_ = StateSimpleSerializer(source='state', read_only=True)
     participant_ = serializers.SerializerMethodField()
+    create_by_name = serializers.CharField(source='create_by.name', read_only=True)
 
     class Meta:
         model = Ticket
@@ -138,7 +139,7 @@ class TicketListSerializer(CustomModelSerializer):
 
     @staticmethod
     def setup_eager_loading(queryset):
-        queryset = queryset.select_related('workflow', 'state')
+        queryset = queryset.select_related('workflow', 'state', 'create_by')
         return queryset
 
 
