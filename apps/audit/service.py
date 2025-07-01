@@ -183,7 +183,10 @@ def sendMail(atask:Atask):
        if is_valid_email(mail):
            to.append(mail)
        else:
-           raise ParseError(f"{user.name}-{user.username}不是有效的邮箱")
+           if user.is_superuser:
+               pass
+           else:
+              raise ParseError(f"{user.name}-{user.username}不是有效的邮箱")
     if is_valid_email(atask.company.email):
         to.append(atask.company.email)
     else:
