@@ -77,6 +77,7 @@ class Company(CommonADModel):
     address = models.CharField('地址', max_length=100, null=True, blank=True)
     contact = models.CharField('联系人', max_length=100, null=True, blank=True)
     phone = models.CharField('联系电话', max_length=100, null=True, blank=True)
+    audit_scope = models.TextField('审计范围', null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '受审计单位'
