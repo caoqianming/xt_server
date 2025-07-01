@@ -158,7 +158,7 @@ class AtaskItem(BaseModel):
                 raise ParseError("所属扣分项不适用")
             self.score = self.standarditem.full_score - self.kill_score
             if self.score < 0:
-                raise ParseError(f"满分为{self.standarditem.full_score}, 扣分已超出")
+                raise ParseError(f"条款{self.standarditem.number}-满分为{self.standarditem.full_score}, 扣分已超出")
             self.checked = True
             self.check_user = user if self.check_user is None else self.check_user
             self.save()
