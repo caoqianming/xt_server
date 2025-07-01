@@ -128,7 +128,8 @@ class TicketListSerializer(CustomModelSerializer):
     class Meta:
         model = Ticket
         fields = ['id', 'title', 'sn', 'workflow', 'workflow_', 'state', 'state_',
-                  'act_state', 'create_time', 'update_time', 'participant_type', 'create_by', 'ticket_data',
+                  'act_state', 'create_time', 'update_time', 'participant_type', 
+                  'create_by', 'create_by_name', 'ticket_data',
                   'participant_', 'script_run_last_result', 'participant']
 
     def get_participant_(self, obj):
