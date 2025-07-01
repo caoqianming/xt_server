@@ -141,11 +141,14 @@ class AtaskViewSet(CustomModelViewSet):
         ins.save()
         return Response()
     
-    @action(methods=['post'], detail=True, perms_map={'post': "atask.update"})
+    @action(methods=['post'], detail=True, perms_map={'post': "atask.update"}, serializer_class=serializers.Serializer)
     @transaction.atomic
     def send_mail(self, request, *args, **kwargs):
         """发送通知邮件"""
+        notify_content = request.data.get("notify_content", None)
         ins:Atask = self.get_object()
+        ins.notify_content = notify_content
+        ins.save(update_fields=["notify_content"])
         sendMail(ins)
         return Response()
     

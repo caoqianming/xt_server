@@ -182,12 +182,17 @@ def sendMail(atask:Atask):
        mail = user.username
        if is_valid_email(mail):
            to.append(mail)
+       else:
+           raise ParseError(f"{user.name}-{user.username}不是有效的邮箱")
     if is_valid_email(atask.company.email):
         to.append(atask.company.email)
+    else:
+        raise ParseError(f"{atask.company.name}-{atask.company.email}不是有效的邮箱")
 
     email = EmailMessage(
-        subject=f"【{atask.company.name}】审核任务",
+        subject=f"【{atask.company.name}】安全审计技术服务通知",
         body=content,
         to=to
     )
+    email.content_subtype = "html"
     email.send()
