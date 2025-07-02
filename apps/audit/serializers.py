@@ -28,6 +28,7 @@ class CompanySerializer(CustomModelSerializer):
 
 class AtaskSerializer(CustomModelSerializer):
     company_name = serializers.CharField(source="company.name", read_only=True)
+    company_ = CompanySerializer(source="company", read_only=True)
     standard_name = serializers.CharField(source="standard.name", read_only=True)
     standard_to_type = serializers.CharField(source="standard.to_type", read_only=True)
     class Meta:

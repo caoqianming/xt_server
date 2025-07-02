@@ -73,6 +73,7 @@ class AtaskViewSet(CustomModelViewSet):
     queryset = Atask.objects.all()
     serializer_class = AtaskSerializer
     retrieve_serializer_class = AtaskDetailSerializer
+    select_related_fields = ["company"]
     filterset_fields = ["company", "year", "standard", "standard__to_type", "state"]
     search_fields = ["company__name"]
     # data_filter = False
