@@ -176,7 +176,7 @@ class AtaskItem(BaseModel):
             l_10.score = ataskitem_qs.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('score'))['score__sum']
             l_10.checked = True
             l_10.save(update_fields=["kill_score", "score", "checked"])
-            self.atask.score = ataskitem_qs.filter(standarditem__is_concern=True).aggregate(Sum('score'))['score__sum']
+            self.atask.score = ataskitem_qs.filter(standarditem__level=10).aggregate(Sum('score'))['score__sum']
             self.atask.save(update_fields=["score"])
         else:
             self.checked = True
