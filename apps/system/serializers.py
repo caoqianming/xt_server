@@ -336,7 +336,7 @@ class UserUpdateSerializer(CustomModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'name', 'avatar', 'phone', 'type', 'is_deleted']
+        fields = ['username', 'name', 'avatar', 'phone', 'type', 'is_deleted', 'gender']
 
     def update(self, instance, validated_data):
         if User.objects.filter(username=validated_data['username']
@@ -372,7 +372,7 @@ class UserCreateSerializer(CustomModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'name', 'avatar', 'phone', 'type']
+        fields = ['username', 'name', 'avatar', 'phone', 'type', 'gender']
 
 
 class PasswordChangeSerializer(serializers.Serializer):

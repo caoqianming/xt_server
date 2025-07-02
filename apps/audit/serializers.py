@@ -53,6 +53,8 @@ class AtaskSerializer(CustomModelSerializer):
 
 class AtaskTeamSerializer(CustomModelSerializer):
     member_name = serializers.CharField(source="member.name", read_only=True)
+    member_gender = serializers.CharField(source="member.gender", read_only=True)
+    member_phone = serializers.CharField(source="member.phone", read_only=True)
     class Meta:
         model = AtaskTeam
         fields = "__all__"

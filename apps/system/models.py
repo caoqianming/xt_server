@@ -125,6 +125,7 @@ class User(AbstractUser, CommonBModel):
     type = models.CharField('账号类型', max_length=10, default='employee')
     name = models.CharField('姓名', max_length=20, null=True, blank=True)
     phone = models.CharField('手机号', max_length=11, null=True, blank=True)
+    gender = models.CharField('性别', max_length=10, default='男')
     avatar = models.CharField(
         '头像', default='/media/default/avatar.png', max_length=100, null=True, blank=True)
     superior = models.ForeignKey(
