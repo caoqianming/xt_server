@@ -125,7 +125,7 @@ class AtaskViewSet(CustomModelViewSet):
         #     raise ParseError("该任务下已存在审计数据,禁止删除")
         return super().destroy(request, *args, **kwargs)
     
-    @action(methods=['put'], detail=True, perms_map={'post': "atask.update"})
+    @action(methods=['put'], detail=True, perms_map={'put': "atask.update"})
     @transaction.atomic
     def state(self, request, *args, **kwargs):
         """变更状态"""
