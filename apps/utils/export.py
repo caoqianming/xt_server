@@ -118,6 +118,8 @@ def export_excel(field_data: list, data: list, FileName: str):
 
     for results in data:
         for index, values in enumerate(results):
+            if values is None:
+                values = ''
             sheet.write(row, index, label=values, style=left_style)
         row += 1
 
