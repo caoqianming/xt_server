@@ -300,7 +300,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
         for i in odata:
             data.append(
                 [[i['level_10_name']],
-                 i['standarditem_number'],
+                 i.get('standarditem_number', None),
                  i['content'],
                  i.get('risk_level_display', None),
                  i["kill_score"],
