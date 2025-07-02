@@ -228,8 +228,9 @@ class AtaskIssue(CommonADModel):
             pass
         elif new_standarditem is not None and old_standarditem is not None and new_standarditem == old_standarditem:
             cls.cal(atask, user, new_standarditem)
-        elif new_standarditem is not None:
-            cls.cal(atask, user, new_standarditem)
-        elif old_standarditem is not None:
-            cls.cal(atask, user, old_standarditem)
+        else:
+            if new_standarditem is not None:
+                cls.cal(atask, user, new_standarditem)
+            if old_standarditem is not None:
+                cls.cal(atask, user, old_standarditem)
             
