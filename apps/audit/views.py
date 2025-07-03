@@ -272,9 +272,9 @@ class AtaskIssueViewSet(CustomModelViewSet):
             ins.atask, 
             ins.update_by, 
             ins.standarditem, 
-            old_kill_score, 
+            old_standarditem, 
             ins.kill_score, 
-            old_standarditem
+            old_kill_score
         )
 
     @transaction.atomic
