@@ -2,17 +2,18 @@ import json
 import logging
 from server.settings import get_sysconfig
 from apps.utils.decorators import auto_log
+from rest_framework.exceptions import ParseError
 
 # 实例化myLogger
 myLogger = logging.getLogger('log')
 
 @auto_log(name='阿里云短信', raise_exception=True, send_mail=True)
 def send_sms(phone: str, template_code: int, template_param: dict):
-    from aliyunsdkcore.client import AcsClient
-    from aliyunsdkcore.request import CommonRequest
     config = get_sysconfig()
     if  config.get("sms", {}).get('enabled', True) is False:
-        return
+        raise ParseError("短信服务未启用")
+    from aliyunsdkcore.client import AcsClient
+    from aliyunsdkcore.request import CommonRequest
     client = AcsClient(config['sms']['xn_key'], config['sms']['xn_secret'], 'default')
     request = CommonRequest()
     # 固定json
