@@ -135,16 +135,16 @@ class WxmpLogin(CreateAPIView):
         code = request.data['code']
         info = wxmpClient.get_basic_info(code=code)
         openid = info['openid']
-        session_key = info['session_key']
+        # session_key = info['session_key']
         try:
             user = User.objects.get(wxmp_openid=openid)
             ret = get_tokens_for_user(user)
-            ret['wxmp_session_key'] = session_key
+            # ret['wxmp_session_key'] = session_key
             ret['wxmp_openid'] = openid
             cache.set(code, ret, 60*5)
             return Response(ret)
         except Exception:
-            return Response({'wxmp_openid': openid, 'wxmp_session_key': session_key}, status=400)
+            return Response({'wxmp_openid': openid}, status=400)
 
 
 class WxLogin(CreateAPIView):
