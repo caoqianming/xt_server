@@ -158,7 +158,7 @@ class AtaskViewSet(CustomModelViewSet):
     def export_pptx(self, request, pk=None):
         """导出pptx"""
         ins:Atask = self.get_object()
-        return Response({'path': export_pptx(ins, '安全审计总结')})
+        return Response({'path': export_pptx(ins, '安全审计总结', request.user)})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}

@@ -1,15 +1,18 @@
 from pptx import Presentation
 from pptx.util import Inches
 from server.settings import BASE_DIR
-from apps.audit.models import Atask, AtaskIssue
+from apps.audit.models import Atask, AtaskIssue, AtaskTeam
 import os
 from datetime import datetime
 from pptx.util import Pt
 from PIL import Image
+from apps.system.models import User
+from apps.utils.permission import has_perm
+from rest_framework.exceptions import ParseError
 
 templ = os.path.join(BASE_DIR, "media/muban/安全审计总结.pptx")
 
-def export_pptx(atask:Atask, FileName:str):
+def export_pptx(atask:Atask, FileName:str, user:User):
    
     def replace_text_preserve_formatting(shape, old_text, new_text):
         if not shape.has_text_frame:
@@ -26,6 +29,13 @@ def export_pptx(atask:Atask, FileName:str):
                     found = True
         
         return found
+    ex_type = "user"
+    if has_perm(user, ["atask.update"]):
+        ex_type = "all"
+    elif AtaskTeam.objects.filter(atask=atask, member=user).exists():
+        ex_type = "user"
+    else:
+        raise ParseError("没有导出PPT的权限")
     prs = Presentation(templ)
 
     slide = prs.slides[0]
@@ -36,9 +46,11 @@ def export_pptx(atask:Atask, FileName:str):
             elif shape.text == "date":
                 replace_text_preserve_formatting(shape, "date", datetime.now().strftime("%Y-%m-%d"))
             elif shape.text == "leader":
-                replace_text_preserve_formatting(shape, "leader", atask.leader.name)
-
-    issues = AtaskIssue.objects.filter(atask=atask).order_by("atask", "standarditem__number_sort", "-create_time")
+                replace_text_preserve_formatting(shape, "leader", user.name)
+    if ex_type == "all":
+        issues = AtaskIssue.objects.filter(atask=atask).order_by("atask", "standarditem__number_sort", "-create_time")
+    elif ex_type == "user":
+        issues = AtaskIssue.objects.filter(atask=atask, create_by=user).order_by("atask", "standarditem__number_sort", "-create_time")
     for ind, issue in enumerate(issues):
         photos = issue.photos
 
