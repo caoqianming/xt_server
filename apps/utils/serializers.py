@@ -75,8 +75,8 @@ class CustomModelSerializer(DynamicFieldsMixin, TreeSerializerMixin, serializers
 class QuerySerializer(serializers.Serializer):
     field = serializers.CharField(label='字段名')
     compare = serializers.ChoiceField(
-        label='比较式', choices=["", "!", "gte", "gt", "lte", "lt", "in", "contains"])
-    value = serializers.CharField(label='值')
+        label='比较式', choices=["", "!", "gte", "gt", "lte", "lt", "in", "contains", "isnull"])
+    value = serializers.JSONField(label='值', allow_null=True)
 
 
 class ComplexSerializer(serializers.Serializer):
