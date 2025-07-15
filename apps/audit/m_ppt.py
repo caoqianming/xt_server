@@ -129,6 +129,6 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                 )
                 current_left += img_widths[i] + spacing  # 移动到下一张图片位置
 
-    path = f"media/temp/{FileName}_{atask.id}.pptx"
+    path = f"media/temp/{FileName}_{atask.id}_{user.name}.pptx"
     prs.save(os.path.join(BASE_DIR, path))
     return path
