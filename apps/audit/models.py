@@ -24,6 +24,13 @@ R_LOW = 10
 R_MID = 20
 R_HIGH = 30
 R_VH = 40
+
+R_LEVEL_DICT = {
+    R_LOW: "低风险",
+    R_MID: "中风险",
+    R_HIGH: "高风险",
+    R_VH: "重大事故隐患"
+}
 # Create your models here.
 class Standard(CommonADModel):
     name = models.CharField('标准名称', max_length=100, unique=True)
@@ -198,8 +205,10 @@ class AtaskIssue(CommonADModel):
     create_by即为检查人
     """
     atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, null=True, blank=True)
+    # 暂时不用
     standarditem_1 = models.ForeignKey(StandardItem, verbose_name="关联一级条款", 
                                        on_delete=models.CASCADE, null=True, blank=True, related_name="issue_standarditem_1")
+    # 暂时不用
     standarditem_2 = models.ForeignKey(StandardItem, verbose_name="关联二级条款", 
                                        on_delete=models.CASCADE, null=True, blank=True, related_name="issue_standarditem_2")
     standarditem = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", 
@@ -218,6 +227,9 @@ class AtaskIssue(CommonADModel):
 
     @classmethod
     def cal(cls, atask:Atask, user:User, standarditem:StandardItem):
+        # 如果标准条款不是三级，则不处理
+        if standarditem.level != 30:
+            return
         try:
             ataskitem = AtaskItem.objects.get(atask=atask, standarditem=standarditem)
         except Exception as e:

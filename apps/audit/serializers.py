@@ -108,6 +108,7 @@ class AtaskItemCheckSerializer(CustomModelSerializer):
 class AtaskIssueSerializer(CustomModelSerializer):
     standard = serializers.CharField(source="atask.standard.id", read_only=True)
     standarditem_number = serializers.CharField(source="standarditem.number", read_only=True)
+    standarditem_parent = serializers.CharField(source="standarditem.parent.id", read_only=True)
     standarditem_standard = serializers.CharField(source="standarditem.standard", read_only=True)
     create_by_name = serializers.CharField(source="create_by.name", read_only=True)
     photos_ = FileSerializer(many=True, read_only=True, source="photos")
@@ -122,6 +123,11 @@ class AtaskIssueSerializer(CustomModelSerializer):
     def validate(self, attrs):
         if "atask" not in attrs or attrs["atask"] is None:
             raise ParseError("未找到审计任务")
+        risk_level = attrs.get("risk_level", None)
+        if risk_level is None:
+            standarditem:StandardItem = attrs.get("standarditem", None)
+            if standarditem is not None:
+                attrs["risk_level"] = standarditem.risk_level
         return super().validate(attrs)
     
     # def create(self, validated_data):
