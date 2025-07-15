@@ -20,6 +20,10 @@ TKS_DICT = {
 C_GROUP = 10
 C_AREA = 20
 C_COMPANY = 30
+R_LOW = 10
+R_MID = 20
+R_HIGH = 30
+R_VH = 40
 # Create your models here.
 class Standard(CommonADModel):
     name = models.CharField('标准名称', max_length=100, unique=True)
@@ -37,10 +41,7 @@ class StandardItem(BaseModel):
     L_1 = 10
     L_2 = 20
     L_3 = 30
-    R_LOW = 10
-    R_MID = 20
-    R_HIGH = 30
-    R_VH = 40
+    
     standard = models.ForeignKey(Standard, verbose_name="关联审计标准", on_delete=models.CASCADE)
     # cate = models.PositiveSmallIntegerField("大类", choices=((10, "基础部分"), (20, "现场部分")))
     number = models.CharField('条款号', max_length=100)
@@ -197,7 +198,15 @@ class AtaskIssue(CommonADModel):
     create_by即为检查人
     """
     atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, null=True, blank=True)
-    standarditem = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", on_delete=models.CASCADE, null=True, blank=True)
+    standarditem_1 = models.ForeignKey(StandardItem, verbose_name="关联一级条款", 
+                                       on_delete=models.CASCADE, null=True, blank=True, related_name="issue_standarditem_1")
+    standarditem_2 = models.ForeignKey(StandardItem, verbose_name="关联二级条款", 
+                                       on_delete=models.CASCADE, null=True, blank=True, related_name="issue_standarditem_2")
+    standarditem = models.ForeignKey(StandardItem, verbose_name="关联审计标准条款", 
+                                     on_delete=models.CASCADE, null=True, blank=True, related_name="issue_standarditem")
+    risk_level = models.PositiveSmallIntegerField("风险等级", 
+                choices=((R_LOW, "低风险"), (R_MID, "中风险"), (R_HIGH, "高风险"), (R_VH, "重大风险")),
+                null=True, blank=True)
     content = models.TextField('问题内容', null=True, blank=True)
     photos = models.ManyToManyField(File, verbose_name="问题照片", blank=True)
     note = models.TextField('备注', null=True, blank=True)
