@@ -9,6 +9,7 @@ from PIL import Image
 from apps.system.models import User
 from apps.utils.permission import has_perm
 from rest_framework.exceptions import ParseError
+from .models import R_LEVEL_DICT
 
 templ = os.path.join(BASE_DIR, "media/muban/安全审计总结.pptx")
 
@@ -54,7 +55,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
     for ind, issue in enumerate(issues):
         photos = issue.photos
 
-        left = top = Inches(1.8)
+        left = top = Inches(1.2)
         if photos.exists():
             top = Inches(1.2)
         slide = prs.slides.add_slide(prs.slide_layouts[2])
@@ -66,23 +67,27 @@ def export_pptx(atask:Atask, FileName:str, user:User):
 
         shapes = slide.shapes
 
-        rows = cols = 2
-        width = Inches(10.0)
+        cols = 3
+        rows = 2
+        width = Inches(11.4)
         height = Inches(1.2)
 
         table = shapes.add_table(rows, cols, left, top, width, height).table
 
         # set column widths
         table.columns[0].width = Inches(2.0)
-        table.columns[1].width = Inches(8.0)
+        table.columns[1].width = Inches(2.0)
+        table.columns[2].width = Inches(7.4)
 
         # write column headings
         table.cell(0, 0).text = '条款'
-        table.cell(0, 1).text = '问题描述'
+        table.cell(0, 1).text = '问题风险等级'
+        table.cell(0, 2).text = '问题描述'
 
         # write body cells
         table.cell(1, 0).text = f'{issue.standarditem.number} {issue.standarditem.parent.parent.content}'  if issue.standarditem else ""
-        table.cell(1, 1).text = issue.content
+        table.cell(1, 1).text = R_LEVEL_DICT.get(issue.risk_level, "")
+        table.cell(1, 2).text = issue.content
 
         # 设置不同的标题和内容字体大小
         for row in range(rows):
