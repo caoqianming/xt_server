@@ -20,6 +20,7 @@ def send_mail_task(**args):
     args['from_email'] = args.get('from_email', settings.EMAIL_HOST_USER)
     args['recipient_list'] = args.get(
         'recipient_list',  settings.EMAIL_DEVELOPERS if hasattr(settings, 'EMAIL_DEVELOPERS') else [settings.EMAIL_HOST_USER])
+    myLogger.error(args['recipient_list'])
     cache_key = f'error_mail_{subject}'
     email_tuple = cache.get(cache_key)
     if email_tuple is None:

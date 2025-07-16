@@ -1,6 +1,9 @@
 from django_filters import rest_framework as filters
 from .models import AtaskItem, AtaskIssue, StandardItem
 from apps.utils.queryset import get_child_queryset2
+import logging
+
+myLogger = logging.getLogger('log')
 
 class AtaskItemFilter(filters.FilterSet):
     standarditem_p = filters.CharFilter(method="filter_standarditem_p")
@@ -15,6 +18,7 @@ class AtaskItemFilter(filters.FilterSet):
         }
 
     def filter_standarditem_p(self, queryset, name, value):
+        myLogger.error(f'filter_standarditem_p: {value}')
         if value or value != "null":
             st = StandardItem.objects.get(pk=value)
             return queryset.filter(standarditem__parent=st.parent)
