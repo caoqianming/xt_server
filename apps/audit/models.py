@@ -31,6 +31,12 @@ R_LEVEL_DICT = {
     R_HIGH: "高风险",
     R_VH: "重大事故隐患"
 }
+R_LEVEL_DICT_R = {
+    "低风险": R_LOW,
+    "中风险": R_MID,
+    "高风险": R_HIGH,
+    "重大事故隐患": R_VH
+}
 # Create your models here.
 class Standard(CommonADModel):
     name = models.CharField('标准名称', max_length=100, unique=True)

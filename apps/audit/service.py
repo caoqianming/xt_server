@@ -1,4 +1,4 @@
-from apps.audit.models import Standard, StandardItem, Atask, AtaskIssue
+from apps.audit.models import Standard, StandardItem, Atask, AtaskIssue, R_LEVEL_DICT_R
 from openpyxl import load_workbook
 from rest_framework.exceptions import ParseError
 from django.core.mail import EmailMessage
@@ -142,20 +142,26 @@ def daoru_issue(path:str, atask: Atask, user):
         standarditem:StandardItem = st_dict.get(ws[f'b{i}'].value, None)
         cal_sitem.append(standarditem)
         number = ws[f'a{i}'].value
-        content = ws[f'c{i}'].value
-        kill_score = int(ws[f'd{i}'].value)
+        risk_level_str = ws[f'c{i}'].value
+        content = ws[f'd{i}'].value
+        kill_score = int(ws[f'e{i}'].value)
         if not number:
             raise ParseError(f"{i}行-问题编号不存在")
         if standarditem is None:
-            raise ParseError(f"{i}行-标准项不存在")
+            raise ParseError(f"{i}行-未关联三级条款")
+        if risk_level_str in ["低风险", "中风险", "高风险", "重大事故隐患"]:
+            risk_level = R_LEVEL_DICT_R[risk_level_str]
+        else:
+            raise ParseError(f"{i}行-风险等级不存在")
         AtaskIssue.objects.get_or_create(
             number = number,
-            standarditem = standarditem,
+            create_by = user,
             atask = atask,
             defaults={
                 "content": content,
                 "kill_score": kill_score,
-                "create_by": user
+                "risk_level": risk_level,
+                "standarditem": standarditem
             }
         )
         i = i + 1
