@@ -3,6 +3,7 @@ from .models import AtaskItem, AtaskIssue, StandardItem
 from apps.utils.queryset import get_child_queryset2
 
 class AtaskItemFilter(filters.FilterSet):
+    standarditem_p = filters.CharFilter(method="filter_standarditem_p")
     class Meta:
         model = AtaskItem
         fields = {
@@ -12,6 +13,12 @@ class AtaskItemFilter(filters.FilterSet):
             "standarditem__level": ["exact"],
             "standarditem__parent": ["exact", "isnull"]
         }
+
+    def filter_standarditem_p(self, queryset, name, value):
+        st = StandardItem.objects.get(pk=value)
+        if st.parent:
+            return queryset.filter(standarditem__in=get_child_queryset2(st.parent))
+        return queryset.filter(standarditem__parent__isnull=True)
 
 class AtaskIssueFilter(filters.FilterSet):
     # ataskitem_belong = filters.CharFilter(method="filter_ataskitem_belong")
