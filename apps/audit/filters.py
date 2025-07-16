@@ -15,7 +15,7 @@ class AtaskItemFilter(filters.FilterSet):
         }
 
     def filter_standarditem_p(self, queryset, name, value):
-        if value:
+        if value or value != "null":
             st = StandardItem.objects.get(pk=value)
             return queryset.filter(standarditem__parent=st.parent)
         return queryset.filter(standarditem__parent__isnull=True)
