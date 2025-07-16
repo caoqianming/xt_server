@@ -15,11 +15,10 @@ class AtaskItemFilter(filters.FilterSet):
         }
 
     def filter_standarditem_p(self, queryset, name, value):
-        st = StandardItem.objects.get(pk=value)
-        if st.parent:
+        if value:
+            st = StandardItem.objects.get(pk=value)
             return queryset.filter(standarditem__parent=st.parent)
-        else:
-            return queryset.filter(standarditem__parent__isnull=True)
+        return queryset.filter(standarditem__parent__isnull=True)
 
 class AtaskIssueFilter(filters.FilterSet):
     # ataskitem_belong = filters.CharFilter(method="filter_ataskitem_belong")
