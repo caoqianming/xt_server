@@ -15,8 +15,10 @@ from apps.audit.service import daoru_standard, daoru_issue, sendMail
 from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
 from rest_framework import serializers
+from apps.audit.service_2 import export_issue_docx
 from apps.utils.export import export_excel
 from apps.audit.m_ppt import export_pptx
+from apps.utils.permission import has_perm
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -160,6 +162,12 @@ class AtaskViewSet(CustomModelViewSet):
         """导出pptx"""
         ins:Atask = self.get_object()
         return Response({'path': export_pptx(ins, '安全审计总结', request.user)})
+    
+    @action(methods=['get'], detail=True, perms_map={'get': '*'})
+    def export_docx(self, request, *args, **kwargs):
+        """导出docx"""
+        ins:Atask = self.get_object()
+        return Response({'path': export_issue_docx(ins)})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}
@@ -221,7 +229,7 @@ class AtaskProblemViewSet(CustomModelViewSet):
         ins:AtaskProblem = self.get_object()
         atask:Atask = ins.atask
         atask.check_do()
-        if ins.create_by == self.request.user or self.request.user == atask.leader:
+        if ins.create_by == self.request.user or self.request.user == atask.leader or has_perm(self.request.user, ["atask.create"]):
             pass
         else:
             raise ParseError("仅创建人/负责人可修改")
@@ -275,7 +283,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
         ins:AtaskIssue = self.get_object()
         atask:Atask = ins.atask
         atask.check_do()
-        if ins.create_by == self.request.user or self.request.user == atask.leader:
+        if ins.create_by == self.request.user or self.request.user == atask.leader or has_perm(self.request.user, ["atask.create"]):
             pass
         else:
             raise ParseError("仅创建人/负责人可修改")
