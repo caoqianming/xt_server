@@ -86,13 +86,14 @@ def export_pptx(atask:Atask, FileName:str, user:User):
 
         # write body cells
         standarditem = issue.standarditem
-        if standarditem.level == 30:
-            yj = standarditem.parent.parent.content
-        elif standarditem.level == 20:
-            yj = standarditem.parent.content
-        elif standarditem.level == 10:
-            yj = standarditem.content
-        table.cell(1, 0).text = f'{issue.standarditem.number} {yj}'  if issue.standarditem else ""
+        if standarditem:
+            if standarditem.level == 30:
+                yj = standarditem.parent.parent.content
+            elif standarditem.level == 20:
+                yj = standarditem.parent.content
+            elif standarditem.level == 10:
+                yj = standarditem.content
+        table.cell(1, 0).text = f'{standarditem.number} {yj}'  if standarditem else ""
         table.cell(1, 1).text = R_LEVEL_DICT.get(issue.risk_level, "")
         table.cell(1, 2).text = issue.content
 
