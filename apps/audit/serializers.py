@@ -149,16 +149,16 @@ class AtaskIssueSerializer(CustomModelSerializer):
 class AtaskIssueExportSerializer(CustomModelSerializer):
     standarditem_number = serializers.CharField(source="standarditem.number", read_only=True)
     create_by_name = serializers.CharField(source="create_by.name", read_only=True)
-    risk_level_display = serializers.SerializerMethodField()
+    # risk_level_display = serializers.SerializerMethodField()
     level_10_name = serializers.SerializerMethodField()
     class Meta:
         model = AtaskIssue
         fields = "__all__"
     
-    def get_risk_level_display(self, obj):
-        if obj.standarditem:  # 检查外键是否存在
-            return obj.standarditem.get_risk_level_display()
-        return None
+    # def get_risk_level_display(self, obj):
+    #     if obj.standarditem:  # 检查外键是否存在
+    #         return obj.standarditem.get_risk_level_display()
+    #     return None
 
     def get_level_10_name(self, obj):
         standitem = obj.standarditem

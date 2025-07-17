@@ -10,7 +10,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework.response import Response
-from .models import TKS_DICT
+from .models import TKS_DICT, R_LEVEL_DICT
 from apps.audit.service import daoru_standard, daoru_issue, sendMail
 from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
@@ -335,7 +335,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
                 [i['level_10_name'],
                  i.get('standarditem_number', None),
                  i['content'],
-                 i.get('risk_level_display', None),
+                 R_LEVEL_DICT.get(i["risk_level"], None),
                  i["kill_score"],
                  i["create_by_name"]]
             )
