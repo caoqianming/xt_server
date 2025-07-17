@@ -261,3 +261,7 @@ class AtaskIssue(CommonADModel):
             if old_standarditem is not None:
                 cls.cal(atask, user, old_standarditem)
             
+
+class AtaskProblem(CommonADModel):
+    atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, null=True, blank=True)
+    content = models.TextField('问题内容', null=True, blank=True)

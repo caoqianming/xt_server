@@ -1,7 +1,7 @@
 from apps.utils.serializers import CustomModelSerializer
 from apps.audit.models import (Standard, StandardItem, 
                                Company, Atask, C_COMPANY, AtaskTeam,
-                               AtaskItem, AtaskIssue)
+                               AtaskItem, AtaskIssue, AtaskProblem)
 from rest_framework.exceptions import ParseError
 from rest_framework import serializers
 from django.db import transaction
@@ -168,3 +168,11 @@ class AtaskIssueExportSerializer(CustomModelSerializer):
                 return p_stand.content
             elif p_stand.level == StandardItem.L_2:
                 return p_stand.parent.content
+
+
+class AtaskProblemSerializer(CustomModelSerializer):
+    class Meta:
+        model = AtaskProblem
+        fields = "__all__"
+        read_only_fields = EXCLUDE_FIELDS
+    

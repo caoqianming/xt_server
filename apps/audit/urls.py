@@ -1,6 +1,7 @@
 from django.urls import path, include
 from .views import (StandardViewSet, StandardItemViewSet, CompanyViewSet,
-                    AtaskViewSet, AtaskItemViewSet, AtaskTeamViewSet, AtaskIssueViewSet)
+                    AtaskViewSet, AtaskItemViewSet, AtaskTeamViewSet, 
+                    AtaskIssueViewSet, AtaskProblemViewSet)
 from rest_framework import routers
 
 API_BASE_URL = 'api/audit/'
@@ -14,6 +15,7 @@ router.register("atask", AtaskViewSet, basename='atask')
 router.register("ataskteam", AtaskTeamViewSet, basename='ataskteam')
 router.register("ataskitem", AtaskItemViewSet, basename="ataskitem")
 router.register("ataskissue", AtaskIssueViewSet, basename="ataskissue")
+router.register("ataskproblem", AtaskProblemViewSet, basename="ataskproblem")
 urlpatterns = [
     path(API_BASE_URL, include(router.urls)),
 ]

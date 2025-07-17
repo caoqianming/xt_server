@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from apps.utils.mixins import CustomListModelMixin, BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin
 from apps.utils.viewsets import CustomModelViewSet, CustomGenericViewSet
-from apps.audit.models import (Standard, StandardItem, Company, Atask, AtaskIssue, AtaskTeam, AtaskItem)
+from apps.audit.models import (Standard, StandardItem, Company, Atask, AtaskIssue, AtaskTeam, AtaskItem, AtaskProblem)
 from apps.audit.serializers import (AtaskItemSerializer, StandardSerializer, StandardItemSerializer, 
                                     CompanySerializer, AtaskSerializer, AtaskTeamSerializer,
-                                    AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer, AtaskIssueExportSerializer)
+                                    AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer, 
+                                    AtaskIssueExportSerializer, AtaskProblemSerializer)
 from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from django.db import transaction
@@ -209,6 +210,30 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
         raise ParseError("未找到最小扣分项")
 
 
+class AtaskProblemViewSet(CustomModelViewSet):
+    queryset = AtaskProblem.objects.all()
+    serializer_class = AtaskProblemSerializer
+    select_related_fields = ["atask", "create_by"]
+    ordering_fields = ["atask", "create_time"]
+    ordering = ["atask", "-create_time"]
+
+    def check_perm(self):
+        ins:AtaskProblem = self.get_object()
+        atask:Atask = ins.atask
+        atask.check_do()
+        if ins.create_by == self.request.user or self.request.user == atask.leader:
+            pass
+        else:
+            raise ParseError("仅创建人/负责人可修改")
+
+    def perform_update(self, serializer):
+        self.check_perm()
+        return super().perform_update(serializer)
+    
+    def perform_destroy(self, instance):
+        self.check_perm()
+        return super().perform_destroy(instance)
+
 
 class AtaskIssueViewSet(CustomModelViewSet):
     queryset = AtaskIssue.objects.all()
@@ -246,7 +271,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
                 return self.queryset.none()
         return super().get_queryset()
 
-    def check_perm(self, ins:AtaskIssue):
+    def check_perm(self):
         ins:AtaskIssue = self.get_object()
         atask:Atask = ins.atask
         atask.check_do()
@@ -261,7 +286,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
         old_kill_score, old_standarditem = ins.kill_score, ins.standarditem
         
         # 先检查权限
-        self.check_perm(ins)
+        self.check_perm()
         
         # 执行原始更新操作
         super().perform_update(serializer)
@@ -279,7 +304,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
 
     @transaction.atomic
     def perform_destroy(self, instance):
-        self.check_perm(instance)
+        self.check_perm()
         old_standarditem, atask, user = instance.standarditem, instance.atask, instance.create_by
         super().perform_destroy(instance)
         AtaskIssue.cal_ataskitem_score(atask, user, None, old_standarditem, None, None)
