@@ -171,6 +171,7 @@ class AtaskIssueExportSerializer(CustomModelSerializer):
 
 
 class AtaskProblemSerializer(CustomModelSerializer):
+    create_by_name = serializers.CharField(source="create_by.name", read_only=True)
     class Meta:
         model = AtaskProblem
         fields = "__all__"
