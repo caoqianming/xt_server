@@ -224,6 +224,7 @@ class AtaskProblemViewSet(CustomModelViewSet):
     select_related_fields = ["atask", "create_by"]
     ordering_fields = ["atask", "create_time"]
     ordering = ["atask", "-create_time"]
+    filterset_fields = ["atask"]
 
     def check_perm(self):
         ins:AtaskProblem = self.get_object()
