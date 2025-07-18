@@ -81,7 +81,7 @@ def export_issue_docx(atask:Atask):
             "n": standarditem.number if standarditem else "",
             "issue_content": item.content,
             "r": R_LEVEL_DICT.get(item.risk_level, ""),
-            "k": item.kill_score if item.kill_score else "",
+            "k": item.kill_score if item.kill_score is not None else "",
             "x": item.create_by.name,
         })
         if item.kill_score is not None:
