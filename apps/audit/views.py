@@ -167,7 +167,8 @@ class AtaskViewSet(CustomModelViewSet):
     def export_docx(self, request, *args, **kwargs):
         """导出docx"""
         ins:Atask = self.get_object()
-        return Response({'path': export_issue_docx(ins)})
+        type = request.query_params.get("type", 1)
+        return Response({'path': export_issue_docx(ins, type)})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}

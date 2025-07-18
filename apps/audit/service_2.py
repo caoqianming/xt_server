@@ -47,7 +47,9 @@ def export_issue_excel(atask:Atask):
 
 
 templ2 = os.path.join(BASE_DIR, "media/muban/xxx任务问题清单.docx")
-def export_issue_docx(atask:Atask):
+def export_issue_docx(atask:Atask, type=1):
+    if type == 2:
+        templ2 = os.path.join(BASE_DIR, "media/muban/xxx任务问题清单2.docx")
     doc = DocxTemplate(templ2)
     title = f'{atask.company.name}安全审计问题清单'
     audit_scope = atask.company.audit_scope if atask.company.audit_scope else ""
