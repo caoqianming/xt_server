@@ -46,8 +46,9 @@ def export_issue_excel(atask:Atask):
 
 
 
-templ2 = os.path.join(BASE_DIR, "media/muban/xxx任务问题清单.docx")
+
 def export_issue_docx(atask:Atask, type=1):
+    templ2 = os.path.join(BASE_DIR, "media/muban/xxx任务问题清单.docx")
     if type == 2:
         templ2 = os.path.join(BASE_DIR, "media/muban/xxx任务问题清单2.docx")
     doc = DocxTemplate(templ2)
