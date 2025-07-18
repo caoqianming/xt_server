@@ -106,6 +106,6 @@ def export_issue_docx(atask:Atask, type=1):
         "s": kill_score_all
     }
     doc.render(context)
-    path = f'/media/temp/任务问题清单_{atask.id}.docx'
+    path = f'/media/temp/任务问题清单_{atask.id}_{type}.docx'
     doc.save(BASE_DIR + path)
     return path
