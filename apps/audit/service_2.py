@@ -50,7 +50,7 @@ templ2 = os.path.join(BASE_DIR, "media/muban/xxx任务问题清单.docx")
 def export_issue_docx(atask:Atask):
     doc = DocxTemplate(templ2)
     title = f'{atask.company.name}安全审计问题清单'
-    audit_scope = f"{atask.company.audit_scope}"
+    audit_scope = atask.company.audit_scope if atask.company.audit_scope else ""
     member_name_list = list(atask.team.values_list("member__name", flat=True))
     member_names = ','.join(member_name_list)
     kfx_qs = AtaskItem.objects.filter(atask=atask, is_suit=False).values("standarditem__number", "standarditem__full_score")
@@ -58,7 +58,11 @@ def export_issue_docx(atask:Atask):
     kfx_full_score_list = [kfx["standarditem__full_score"] for kfx in kfx_qs]
     kfx_str = '/'.join(kfx_number_list)
     kfx_score_str = '+'.join([str(score) for score in kfx_full_score_list])
-    kfx = f'{kfx_str}={kfx_score_str}={sum(kfx_full_score_list)}'
+    sum_kfx_score = sum(kfx_full_score_list)
+    if sum_kfx_score == 0:
+        kfx = '无'
+    else:
+        kfx = f'{kfx_str}={kfx_score_str}={sum_kfx_score}'
     issues = []
     kill_score_all = 0
     for item in AtaskIssue.objects.filter(atask=atask).order_by("atask", "standarditem__number_sort", "-create_time"):
