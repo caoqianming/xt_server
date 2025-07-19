@@ -168,6 +168,11 @@ class AtaskViewSet(CustomModelViewSet):
         """导出docx"""
         ins:Atask = self.get_object()
         type = request.query_params.get("type", 1)
+        if type == "1" or type == 1:
+            if has_perm(self.request.user, "atask.udpate") or ins.leader == self.request.user:
+                pass
+            else:
+                raise ParseError("仅组长可操作")
         return Response({'path': export_issue_docx(ins, type)})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):

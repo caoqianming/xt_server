@@ -19,6 +19,11 @@ class StandardItemSerializer(CustomModelSerializer):
     class Meta:
         model = StandardItem
         fields = "__all__"
+    
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["full_name"] = f"{ret['number']}:{ret.get('content', '')}"
+        return ret
 
 
 class CompanySerializer(CustomModelSerializer):
