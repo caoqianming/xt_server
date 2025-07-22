@@ -135,7 +135,7 @@ def daoru_issue(path:str, atask: Atask, user):
         st_dict[item.number] = item
 
     wb = load_workbook(path)
-    ws = wb["Sheet1"]
+    ws = wb.active
     i = 3
     cal_sitem = []
     while ws[f'b{i}'].value:
@@ -144,7 +144,7 @@ def daoru_issue(path:str, atask: Atask, user):
         number = ws[f'a{i}'].value
         risk_level_str = ws[f'c{i}'].value
         content = ws[f'd{i}'].value
-        kill_score = int(ws[f'e{i}'].value)
+        kill_score = int(ws[f'e{i}'].value) if ws[f'e{i}'].value else None
         if not number:
             raise ParseError(f"{i}行-问题编号不存在")
         if standarditem is None:
