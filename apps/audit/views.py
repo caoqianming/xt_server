@@ -174,6 +174,12 @@ class AtaskViewSet(CustomModelViewSet):
             else:
                 raise ParseError("仅组长可操作")
         return Response({'path': export_issue_docx(ins, type)})
+    
+    @action(methods=['post'], detail=True, perms_map={'post': 'atask.update'})
+    def sync_standard(self, request, *args, **kwargs):
+        ins:Atask = self.get_object()
+        ins.init()
+        return Response()
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}

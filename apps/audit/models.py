@@ -133,7 +133,7 @@ class Atask(CommonADModel):
             raise ParseError("该任务状态下不可操作")
         
     def init(self):
-        for st in StandardItem.objects.filter(standard=self.standard).order_by("number"):
+        for st in StandardItem.objects.filter(standard=self.standard).order_by("number_sort"):
             checked = None
             is_suit = None
             kill_score = None
