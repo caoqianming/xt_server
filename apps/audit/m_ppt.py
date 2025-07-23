@@ -10,8 +10,44 @@ from apps.system.models import User
 from apps.utils.permission import has_perm
 from rest_framework.exceptions import ParseError
 from .models import R_LEVEL_DICT
+from io import BytesIO
+import logging
+
+myLogger = logging.getLogger("log")
 
 templ = os.path.join(BASE_DIR, "media/muban/安全审计总结.pptx")
+
+def convert_to_supported_format(image_path):
+    """将不支持的图片格式（如 MPO）转换为 PNG/JPEG"""
+    try:
+        with Image.open(image_path) as img:
+            # 创建一个临时内存文件（避免磁盘 I/O）
+            output_buffer = BytesIO()
+            
+            # 如果图片是 MPO，Pillow 会自动读取第一帧
+            if img.format == "MPO":
+                myLogger.warning(f"Converted MPO image to PNG: {image_path}")
+            
+            # 转换为 PNG（或 JPEG，根据需求调整）
+            img.save(output_buffer, format="PNG")
+            output_buffer.seek(0)  # 重置指针
+            return output_buffer
+    except Exception as e:
+        myLogger.error(f"Failed to convert image {image_path}: {str(e)}")
+        raise ValueError(f"Unsupported image format or corrupt file: {image_path}")
+
+def add_image_to_slide(slide, image_path, left, top, width=None, height=None):
+    """安全地添加图片到幻灯片，自动处理格式转换"""
+    try:
+        # 直接尝试插入图片（如果格式已支持）
+        slide.shapes.add_picture(image_path, left, top, width, height)
+    except ValueError as e:
+        if "unsupported image format" in str(e):
+            # 如果是格式不支持（如 MPO），转换后再插入
+            converted_image = convert_to_supported_format(image_path)
+            slide.shapes.add_picture(converted_image, left, top, width, height)
+        else:
+            raise  # 其他错误继续抛出
 
 def export_pptx(atask:Atask, FileName:str, user:User):
    
@@ -134,12 +170,13 @@ def export_pptx(atask:Atask, FileName:str, user:User):
             current_left = start_left
             for i, v in enumerate(photos.all()[:3]):
                 img_path = BASE_DIR + v.path
-                slide.shapes.add_picture(
-                    img_path,
-                    current_left, top_position,
-                    height=img_height,
-                    width=img_widths[i]
-                )
+                add_image_to_slide(slide, img_path, current_left, top_position, img_height, img_widths[i])
+                # slide.shapes.add_picture(
+                #     img_path,
+                #     current_left, top_position,
+                #     height=img_height,
+                #     width=img_widths[i]
+                # )
                 current_left += img_widths[i] + spacing  # 移动到下一张图片位置
 
     path = f"/media/temp/{FileName}_{atask.id}_{user.name}.pptx"
