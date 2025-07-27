@@ -159,7 +159,8 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                 with Image.open(img_path) as img:
                     width_px, height_px = img.size
                     aspect_ratio = width_px / height_px  # 宽高比（宽度/高度）h)
-                    width = max(img_height * aspect_ratio, min_width)
+                    # width = max(img_height * aspect_ratio, min_width)
+                    width = img_height * aspect_ratio
                     img_widths.append(width)
 
             # 计算总宽度和起始位置（居中）
