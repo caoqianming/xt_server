@@ -5,6 +5,8 @@ import os
 from apps.audit.models import R_LEVEL_DICT
 from docxtpl import DocxTemplate
 import logging
+import re
+from xml.sax.saxutils import escape
 
 myLogger = logging.getLogger('log')
 
@@ -85,10 +87,11 @@ def export_issue_docx(atask:Atask, type=1):
         issues.append({
             "c": content,
             "n": standarditem.number if standarditem else "",
-            "issue_content": item.content,
+            # "issue_content": item.content if item.content else "",
+            "issue_content": escape(item.content) if item.content else "",
             "r": R_LEVEL_DICT.get(item.risk_level, ""),
             "k": item.kill_score if item.kill_score is not None else "",
-            "x": item.create_by.name,
+            "x": item.create_by.name if item.create_by.name else "",
         })
         if item.kill_score is not None:
             kill_score_all += item.kill_score
@@ -97,7 +100,7 @@ def export_issue_docx(atask:Atask, type=1):
     for ind, item in enumerate(AtaskProblem.objects.filter(atask=atask).order_by("atask", "-create_time")):
         problems.append({
             "index": ind+1,
-            "content": item.content,
+            "content": item.content if item.content else "",
         })
     context = {
         "title": title,
@@ -108,7 +111,22 @@ def export_issue_docx(atask:Atask, type=1):
         "problems": problems,
         "s": kill_score_all
     }
+    
     doc.render(context)
     path = f'/media/temp/任务问题清单_{atask.id}_{type}.docx'
     doc.save(BASE_DIR + path)
     return path
+
+
+def deep_clean(data):
+    if isinstance(data, dict):
+        return {k: deep_clean(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [deep_clean(item) for item in data]
+    elif isinstance(data, str):
+        # 移除非法控制字符（保留 \t, \n, \r）
+        data = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', data)
+        # 不转义 XML，docxtpl 会自动处理
+        return data
+    else:
+        return data  # 保持数字、布尔值等不变

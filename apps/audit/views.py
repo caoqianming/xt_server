@@ -169,7 +169,7 @@ class AtaskViewSet(CustomModelViewSet):
         ins:Atask = self.get_object()
         type = request.query_params.get("type", 1)
         if type == "1" or type == 1:
-            if has_perm(self.request.user, "atask.udpate") or ins.leader == self.request.user:
+            if self.request.user.is_superuser or has_perm(self.request.user, ["atask.udpate"]) or ins.leader == self.request.user:
                 pass
             else:
                 raise ParseError("仅组长可操作")
