@@ -49,6 +49,10 @@ class Standard(CommonADModel):
 
     def __str__(self):
         return self.name
+    
+    def cal(self):
+        self.total_score = StandardItem.objects.filter(standard=self, is_concern=True).aggregate(Sum('full_score'))['full_score__sum'] or 0
+        self.save(update_fields=["total_score"])
 
 class StandardItem(BaseModel):
     L_1 = 10
@@ -113,6 +117,7 @@ class Atask(CommonADModel):
     notify_content = models.TextField('通知内容', null=True, blank=True)
     note = models.TextField('备注', null=True, blank=True)
     score = models.PositiveIntegerField("得分", null=True, blank=True)
+    full_score = models.PositiveBigIntegerField("满分", null=True, blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = '审计任务'
@@ -143,6 +148,11 @@ class Atask(CommonADModel):
                 kill_score = 0
             AtaskItem.objects.get_or_create(atask=self, standarditem=st, defaults={"checked": checked, 
                                                                                   "is_suit": is_suit, "kill_score": kill_score, "score": st.full_score})
+    def cal(self):
+        ataskitem_qs = AtaskItem.objects.filter(atask=self)
+        self.full_score = ataskitem_qs.filter(standarditem__is_concern=True, is_suit=True).aggregate(Sum('standarditem__full_score'))['standarditem__full_score__sum']
+        self.score = ataskitem_qs.filter(standarditem__is_concern=True, is_suit=True).aggregate(Sum('score'))['score__sum']
+        self.save()
 
 class AtaskTeam(BaseModel):
     atask = models.ForeignKey(Atask, verbose_name="关联审计任务", on_delete=models.CASCADE, related_name="team_atask")
@@ -170,10 +180,11 @@ class AtaskItem(BaseModel):
         ataskitem_qs = AtaskItem.objects.filter(atask=self.atask)
         if self.standarditem.is_concern:
             if self.is_suit is False:
-                raise ParseError("所属扣分项不适用")
-            self.score = self.standarditem.full_score - self.kill_score
-            if self.score < 0:
-                raise ParseError(f"条款{self.standarditem.number}-满分为{self.standarditem.full_score}, 扣分已超出")
+                self.score = 0
+            else:
+                self.score = self.standarditem.full_score - self.kill_score
+                if self.score < 0:
+                    raise ParseError(f"条款{self.standarditem.number}-满分为{self.standarditem.full_score}, 扣分已超出")
             self.checked = True
             self.check_user = user if self.check_user is None else self.check_user
             self.save()
@@ -190,8 +201,7 @@ class AtaskItem(BaseModel):
             l_10.score = ataskitem_qs.filter(standarditem__parent=l_10.standarditem).aggregate(Sum('score'))['score__sum']
             l_10.checked = True
             l_10.save(update_fields=["kill_score", "score", "checked"])
-            self.atask.score = ataskitem_qs.filter(standarditem__level=10).aggregate(Sum('score'))['score__sum']
-            self.atask.save(update_fields=["score"])
+            self.atask.cal()
         else:
             self.checked = True
             self.check_user = user if self.check_user is None else self.check_user

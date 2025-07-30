@@ -124,8 +124,7 @@ def daoru_standard(path: str, sta: Standard):
     if current_item1:
         current_item1.full_score = current_item1_score
         current_item1.save()
-    sta.total_score = total_score
-    sta.save()
+    sta.cal()
     return sta
 
 def daoru_issue(path:str, atask: Atask, user):

@@ -207,10 +207,18 @@ class AtaskItemViewSet(CustomListModelMixin, BulkUpdateModelMixin, CustomGeneric
     def perform_update(self, serializer):
         obj:AtaskItem = self.get_object()
         if self.request.user != obj.atask.leader:
-            raise ParseError("仅组长可操作")
+            if self.request.user.is_superuser:
+                pass
+            else:
+                raise ParseError("仅组长可操作")
         if obj.atask.state != Atask.S_DOING:
             raise ParseError("该任务状态下不可操作")
         ins:AtaskItem = serializer.save()
+        # if ins.standarditem.is_concern and ins.is_suit is False:
+        #     ins.score = 0
+        #     ins.save()
+        ins.cal_score(self.request.user)
+        # ins.atask.cal()
         # ins.cal_score(self.request.user)
     
     def list(self, request, *args, **kwargs):
