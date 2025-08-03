@@ -4,6 +4,10 @@ from rest_framework.exceptions import ParseError
 from django.core.mail import EmailMessage
 from apps.system.models import User
 import re
+import os
+import shutil
+import zipfile
+from django.core.files import File
 
 def get_number_sort(number: str):
     parts = str(number).split('.')
@@ -169,6 +173,27 @@ def daoru_issue(path:str, atask: Atask, user):
         for item in cal_sitem:
             AtaskIssue.cal(atask, user, item)
 
+
+def daoru_issue_img(fullpath:str, atask: Atask, user):
+    if fullpath.endswith(".zip"):
+        pass
+    else:
+        raise ParseError("仅支持zip格式压缩包")
+    fulldir = fullpath.replace(".zip", "")
+    if os.path.exists(fulldir):
+        shutil.rmtree(fulldir)
+    os.mkdir(fulldir)
+    os.chdir(fulldir)
+    with zipfile.ZipFile(fullpath, 'r') as zip_ref:
+        zip_ref.extractall(fulldir)
+        for root, dirs, files in os.walk(fulldir):
+            for f in files:
+                if f.lower().endswith(".png") or f.lower().endswith(".jpg") or f.lower().endswith(".jpeg"):
+                    pass
+                else:
+                    raise ParseError(f"文件{f}不是图片格式")
+        for root, dirs, files in os.walk(fulldir):
+             pass
 
 def sendMail(atask:Atask):
     team = atask.team
