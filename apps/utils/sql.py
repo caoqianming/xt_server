@@ -46,13 +46,10 @@ def query_one_dict(sql, params=None):
     :return:
     """
     with connection.cursor() as cursor:
-        if params:
-            cursor.execute(sql, params=params)
-        else:
-            cursor.execute(sql)
+        cursor.execute(sql, params or ())  # 更简洁的参数处理
         columns = [desc[0] for desc in cursor.description]
         row = cursor.fetchone()
-        return dict(zip(columns, row))
+        return dict(zip(columns, row)) if row else None  # 安全处理None情况
     
 import pymysql
 import psycopg2
