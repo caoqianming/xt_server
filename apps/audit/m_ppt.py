@@ -100,7 +100,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
     elif ex_type == "user":
         issues = AtaskIssue.objects.filter(atask=atask, create_by=user).order_by("atask", "standarditem__number_sort", "-create_time")
     
-    issues = issues.select_related('standarditem', 'photos').prefetch_related('photos')
+    issues = issues.select_related('standarditem').prefetch_related('photos')
 
     # 1. 提前缓存所有图片的BytesIO和尺寸信息
     photo_cache = {}
