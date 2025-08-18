@@ -50,9 +50,7 @@ def add_image_to_slide(slide, image_path, left, top, width=None, height=None):
         else:
             raise  # 其他错误继续抛出
 
-def export_pptx(atask:Atask, FileName:str, user:User):
-   
-   def process_image(img_path, issueId):
+def process_image(img_path, issueId):
     """处理单张图片并返回BytesIO和宽高比"""
     with Image.open(img_path) as img:
         # 压缩图片逻辑（可选）
@@ -61,7 +59,8 @@ def export_pptx(atask:Atask, FileName:str, user:User):
         img.save(buffer, format="JPEG", quality=85)
         buffer.seek(0)
         return buffer, img.width / img.height, issueId
-    
+
+def export_pptx(atask:Atask, FileName:str, user:User):    
     def replace_text_preserve_formatting(shape, old_text, new_text):
         if not shape.has_text_frame:
             return False
