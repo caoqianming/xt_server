@@ -178,16 +178,16 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                             else:
                                 run.font.size = Pt(20)  # 其他内容列字体大小
 
-        if photos.exists():
-            num_images = min(photos.count(), 3)  # 不超过3张
+        if issue.id in photo_cache:
+            num_images = len(photo_cache[issue.id])  # 不超过3张
             img_height = Inches(4.2)  # 固定高度
             min_width = Inches(2.4) 
             spacing = Inches(0.2)     # 图片间隔
             top_position = Inches(2.8)  # 图片起始Y位置
         
-        if issue.content and len(issue.content) > 48:
-            top_position = Inches(3.2)  # 图片起始Y位置
-            img_height = Inches(3.8)  # 固定高度
+            if issue.content and len(issue.content) > 48:
+                top_position = Inches(3.2)  # 图片起始Y位置
+                img_height = Inches(3.8)  # 固定高度
 
             # 计算所有图片的自适应宽度
             img_widths = []
@@ -201,7 +201,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
             #     width = img_height * aspect_ratio
             #     img_widths.append(width)
             #     img_data.append(img)
-            myLogger.error(photo_cache)
+            # myLogger.error(photo_cache)
             for item in photo_cache[issue.id]:
                 buffer, aspect_ratio = item
                 img_data.append(buffer)
