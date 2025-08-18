@@ -400,19 +400,7 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
             raise ParseError('非创建人不可撤回')
         if not ticket.state.enable_retreat:
             raise ParseError('该状态不可撤回')
-        start_state = WfService.get_workflow_start_state(ticket.workflow)
-        ticket.state = start_state
-        ticket.participant_type = State.PARTICIPANT_TYPE_PERSONAL
-        ticket.participant = request.user.id
-        ticket.act_state = Ticket.TICKET_ACT_STATE_RETREAT
-        ticket.save()
-        # 更新流转记录
-        suggestion = request.data.get('suggestion', '')  # 撤回原因
-        TicketFlow.objects.create(ticket=ticket, state=ticket.state,
-                                  ticket_data=WfService.get_ticket_all_field_value(ticket),
-                                  suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_PERSONAL,
-                                  intervene_type=Transition.TRANSITION_INTERVENE_TYPE_RETREAT,
-                                  participant=request.user, transition=None)
+        WfService.retreat(ticket, request.data.get('suggestion', ''), request.user, request.user)
         return Response()
 
     @action(methods=['post'], detail=True, perms_map={'post': '*'}, serializer_class=TicketAddNodeSerializer)

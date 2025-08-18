@@ -462,7 +462,23 @@ class WfService(object):
                                     ticket_data=WfService.get_ticket_all_field_value(ticket),
                                     suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_ROBOT,
                                     intervene_type=Transition.TRANSITION_INTERVENE_TYPE_CLOSE, transition=None)
-
+    @classmethod
+    def retreat(cls, ticket: Ticket, suggestion: str, handler: User, next_handler: User):
+        """
+        回退
+        """
+        start_state = WfService.get_workflow_start_state(ticket.workflow)
+        ticket.state = start_state
+        ticket.participant_type = State.PARTICIPANT_TYPE_PERSONAL
+        ticket.participant = next_handler.id
+        ticket.act_state = Ticket.TICKET_ACT_STATE_RETREAT
+        ticket.save()
+        # 更新流转记录
+        TicketFlow.objects.create(ticket=ticket, state=ticket.state,
+                                  ticket_data=WfService.get_ticket_all_field_value(ticket),
+                                  suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_PERSONAL,
+                                  intervene_type=Transition.TRANSITION_INTERVENE_TYPE_RETREAT,
+                                  participant=handler, transition=None)
 def send_ticket_notice_t(ticket: Ticket):
     """
     发送通知
