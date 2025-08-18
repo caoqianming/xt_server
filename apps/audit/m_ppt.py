@@ -143,14 +143,21 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                             run.font.size = Pt(18)  # 标题字体大小
                             run.font.bold = True    # 标题加粗
                         else:         # 内容行
-                            run.font.size = Pt(20)  # 内容字体大小
+                            if col == 2:  # 第3列（索引从0开始，所以2表示第3列）
+                                run.font.size = Pt(18)  # 第3列字体缩小
+                            else:
+                                run.font.size = Pt(20)  # 其他内容列字体大小
 
         if photos.exists():
             num_images = min(photos.count(), 3)  # 不超过3张
-            img_height = Inches(4)  # 固定高度
+            img_height = Inches(4.2)  # 固定高度
             min_width = Inches(2.4) 
             spacing = Inches(0.2)     # 图片间隔
             top_position = Inches(2.8)  # 图片起始Y位置
+        
+        if issue.content and len(issue.content) > 48:
+            top_position = Inches(3.2)  # 图片起始Y位置
+            img_height = Inches(3.8)  # 固定高度
 
             # 计算所有图片的自适应宽度
             img_widths = []
