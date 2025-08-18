@@ -201,10 +201,11 @@ def export_pptx(atask:Atask, FileName:str, user:User):
             #     width = img_height * aspect_ratio
             #     img_widths.append(width)
             #     img_data.append(img)
+            myLogger.error(photo_cache)
             for item in photo_cache[issue.id]:
                 buffer, aspect_ratio = item
-                img_data.append(item[0])
-                img_widths.append(item[1]*img_height)
+                img_data.append(buffer)
+                img_widths.append(aspect_ratio*img_height)
 
             # 计算总宽度和起始位置（居中）
             total_width = sum(img_widths) + (num_images - 1) * spacing
