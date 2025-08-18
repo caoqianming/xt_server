@@ -147,7 +147,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
 
         if photos.exists():
             num_images = min(photos.count(), 3)  # 不超过3张
-            img_height = Inches(3.5)  # 固定高度
+            img_height = Inches(4)  # 固定高度
             min_width = Inches(2.4) 
             spacing = Inches(0.2)     # 图片间隔
             top_position = Inches(2.8)  # 图片起始Y位置
@@ -160,8 +160,8 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                     width_px, height_px = img.size
                     aspect_ratio = width_px / height_px  # 宽高比（宽度/高度）h)
                     # width = max(img_height * aspect_ratio, min_width)
-                    width = img_height * aspect_ratio
-                    img_widths.append(width)
+                width = img_height * aspect_ratio
+                img_widths.append(width)
 
             # 计算总宽度和起始位置（居中）
             total_width = sum(img_widths) + (num_images - 1) * spacing
@@ -171,7 +171,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
             current_left = start_left
             for i, v in enumerate(photos.all()[:3]):
                 img_path = BASE_DIR + v.path
-                add_image_to_slide(slide, img_path, current_left, top_position, img_height, img_widths[i])
+                add_image_to_slide(slide, img_path, current_left, top_position, img_widths[i], img_height)
                 # slide.shapes.add_picture(
                 #     img_path,
                 #     current_left, top_position,
