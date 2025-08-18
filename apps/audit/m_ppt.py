@@ -146,9 +146,9 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                             run.font.size = Pt(18)  # 标题字体大小
                             run.font.bold = True    # 标题加粗
                         else:         # 内容行
-                            if col == 2:  # 第3列（索引从0开始，所以2表示第3列）
-                                run.font.size = Pt(18)  # 第3列字体缩小
-                            else:
+                            # if col == 2:  # 第3列（索引从0开始，所以2表示第3列）
+                            #     run.font.size = Pt(18)  # 第3列字体缩小
+                            # else:
                                 run.font.size = Pt(20)  # 其他内容列字体大小
 
         if photos.exists():
