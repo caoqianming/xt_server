@@ -84,10 +84,13 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                 replace_text_preserve_formatting(shape, "date", datetime.now().strftime("%Y-%m-%d"))
             elif shape.text == "leader":
                 replace_text_preserve_formatting(shape, "leader", user.name)
+    
     if ex_type == "all":
         issues = AtaskIssue.objects.filter(atask=atask).order_by("atask", "standarditem__number_sort", "-create_time")
     elif ex_type == "user":
         issues = AtaskIssue.objects.filter(atask=atask, create_by=user).order_by("atask", "standarditem__number_sort", "-create_time")
+    
+    issues = issues.select_related('standarditem', 'photos').prefetch_related('photos')
     for ind, issue in enumerate(issues):
         photos = issue.photos
 
