@@ -12,6 +12,7 @@ from rest_framework.exceptions import ParseError
 from .models import R_LEVEL_DICT
 from io import BytesIO
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 myLogger = logging.getLogger("log")
 
@@ -51,6 +52,16 @@ def add_image_to_slide(slide, image_path, left, top, width=None, height=None):
 
 def export_pptx(atask:Atask, FileName:str, user:User):
    
+   def process_image(img_path, issueId):
+    """处理单张图片并返回BytesIO和宽高比"""
+    with Image.open(img_path) as img:
+        # 压缩图片逻辑（可选）
+        img.thumbnail((1600, 1600))  # 限制最大尺寸
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        buffer.seek(0)
+        return buffer, img.width / img.height, issueId
+    
     def replace_text_preserve_formatting(shape, old_text, new_text):
         if not shape.has_text_frame:
             return False
@@ -91,6 +102,23 @@ def export_pptx(atask:Atask, FileName:str, user:User):
         issues = AtaskIssue.objects.filter(atask=atask, create_by=user).order_by("atask", "standarditem__number_sort", "-create_time")
     
     issues = issues.select_related('standarditem', 'photos').prefetch_related('photos')
+
+    # 1. 提前缓存所有图片的BytesIO和尺寸信息
+    photo_cache = {}
+    with ThreadPoolExecutor() as executor:  # 多线程加速
+        futures = []
+        for issue in issues:
+            for photo in issue.photos.all()[:3]:  # 限制每issue最多3张
+                img_path = BASE_DIR + photo.path
+                futures.append(executor.submit(process_image, img_path, issue.id))
+        
+        for future in futures:
+            buffer, aspect_ratio, issueId = future.result()
+            if issueId not in photo_cache:
+                photo_cache[issueId] = [(buffer, aspect_ratio)]
+            else:
+                photo_cache[issueId].append((buffer, aspect_ratio))
+
     for ind, issue in enumerate(issues):
         photos = issue.photos
 
@@ -146,9 +174,9 @@ def export_pptx(atask:Atask, FileName:str, user:User):
                             run.font.size = Pt(18)  # 标题字体大小
                             run.font.bold = True    # 标题加粗
                         else:         # 内容行
-                            # if col == 2:  # 第3列（索引从0开始，所以2表示第3列）
-                            #     run.font.size = Pt(18)  # 第3列字体缩小
-                            # else:
+                            if col == 2:  # 第3列（索引从0开始，所以2表示第3列）
+                                run.font.size = Pt(18)  # 第3列字体缩小
+                            else:
                                 run.font.size = Pt(20)  # 其他内容列字体大小
 
         if photos.exists():
@@ -164,14 +192,20 @@ def export_pptx(atask:Atask, FileName:str, user:User):
 
             # 计算所有图片的自适应宽度
             img_widths = []
-            for v in photos.all()[:3]:
-                img_path = BASE_DIR + v.path
-                with Image.open(img_path) as img:
-                    width_px, height_px = img.size
-                    aspect_ratio = width_px / height_px  # 宽高比（宽度/高度）h)
-                    # width = max(img_height * aspect_ratio, min_width)
-                width = img_height * aspect_ratio
-                img_widths.append(width)
+            img_data= []
+            # for v in photos.all()[:3]:
+            #     img_path = BASE_DIR + v.path
+            #     with Image.open(img_path) as img:
+            #         width_px, height_px = img.size
+            #         aspect_ratio = width_px / height_px  # 宽高比（宽度/高度）h)
+            #         # width = max(img_height * aspect_ratio, min_width)
+            #     width = img_height * aspect_ratio
+            #     img_widths.append(width)
+            #     img_data.append(img)
+            for item in photo_cache[issue.id]:
+                buffer, aspect_ratio = item
+                img_data.append(item[0])
+                img_widths.append(item[1]*img_height)
 
             # 计算总宽度和起始位置（居中）
             total_width = sum(img_widths) + (num_images - 1) * spacing
@@ -179,9 +213,8 @@ def export_pptx(atask:Atask, FileName:str, user:User):
 
             # 添加图片
             current_left = start_left
-            for i, v in enumerate(photos.all()[:3]):
-                img_path = BASE_DIR + v.path
-                add_image_to_slide(slide, img_path, current_left, top_position, img_widths[i], img_height)
+            for i, v in enumerate(img_widths):
+                add_image_to_slide(slide, img_data[i], current_left, top_position, v, img_height)
                 # slide.shapes.add_picture(
                 #     img_path,
                 #     current_left, top_position,
