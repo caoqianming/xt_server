@@ -147,7 +147,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
 
         if photos.exists():
             num_images = min(photos.count(), 3)  # 不超过3张
-            img_height = Inches(4)  # 固定高度
+            img_height = Inches(3.5)  # 固定高度
             min_width = Inches(2.4) 
             spacing = Inches(0.2)     # 图片间隔
             top_position = Inches(2.8)  # 图片起始Y位置
