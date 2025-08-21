@@ -18,6 +18,7 @@ from drf_yasg import openapi
 from apps.utils.serializers import PkSerializer
 from rest_framework.decorators import action
 from apps.utils.serializers import ComplexSerializer
+from django.db.models import F
 
 # 实例化myLogger
 myLogger = logging.getLogger('log')
@@ -265,7 +266,11 @@ class ComplexQueryMixin:
         if isinstance(ordering, str):
             ordering = ordering.split(',')
         if ordering:
-            new_qs = new_qs.order_by(*ordering)
+            for item in ordering:
+                if item.startswith('-'):
+                    new_qs = new_qs.order_by(F(item[1:]).desc(nulls_last=True))
+                else:
+                    new_qs = new_qs.order_by(item)
         page = self.paginate_queryset(new_qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
