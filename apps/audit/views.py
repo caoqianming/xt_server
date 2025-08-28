@@ -85,11 +85,15 @@ class AtaskViewSet(CustomModelViewSet):
     def add_info_for_list(self, data):
         ids = [ins["id"] for ins in data]
         members_dict  = {}
+        leaders_dict = {}
         members = AtaskTeam.objects.filter(atask__id__in=ids).order_by("duty_type").select_related('member', 'atask')
         for member in members:
             if member.atask.id not in members_dict:
                 members_dict[member.atask.id] = []
+            if member.duty_type == 10:
+                leaders_dict[member.atask.id] = {"id": member.member.id, "name": member.member.name}
             members_dict[member.atask.id].append({
+                "member_id": member.member.id,
                 "member_name": member.member.name,
                 "duty_type": member.duty_type
             })
@@ -100,6 +104,9 @@ class AtaskViewSet(CustomModelViewSet):
                 item["team"] = members_dict[task_id]
             else:
                 item["team"] = []
+            if task_id in leaders_dict:
+                item["leader_id"] = leaders_dict[task_id]["id"]
+                item["leader_name"] = leaders_dict[task_id]["name"]
         return data
     
     @action(methods=['get'], detail=False, perms_map={'get': '*'})
