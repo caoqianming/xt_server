@@ -19,6 +19,7 @@ from apps.audit.service_2 import export_issue_docx
 from apps.utils.export import export_excel
 from apps.audit.m_ppt import export_pptx
 from apps.utils.permission import has_perm
+from django.db.models import Sum
 # Create your views here.
 
 class StandardViewSet(CustomModelViewSet):
@@ -44,6 +45,19 @@ class StandardItemViewSet(CustomModelViewSet):
     filterset_fields = ["standard", "id", "number", "level", "risk_level", "is_concern"]
     search_fields = ["number", "content"]
     ordering = ["standard", "number_sort"]
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        ins:StandardItem = self.get_object()
+        old_full_score = ins.full_score
+        newins: StandardItem = serializer.save()
+        if old_full_score != newins.full_score:
+            if newins.parent:
+                newins.parent.full_score = StandardItem.objects.filter(parent=newins.parent).aggregate(Sum("full_score"))["full_score__sum"]
+                newins.parent.save(update_fields=["full_score"])
+                if newins.parent.parent:
+                    newins.parent.parent.full_score = StandardItem.objects.filter(parent=newins.parent.parent).aggregate(Sum("full_score"))["full_score__sum"]
+                    newins.parent.parent.save(update_fields=["full_score"])
 
 class CompanyViewSet(CustomModelViewSet):
     queryset = Company.objects.all()
