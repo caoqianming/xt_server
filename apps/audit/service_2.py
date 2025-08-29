@@ -2,7 +2,7 @@ from server.settings import BASE_DIR
 from apps.audit.models import Atask, AtaskItem, AtaskIssue, AtaskProblem
 from openpyxl import load_workbook
 import os
-from apps.audit.models import R_LEVEL_DICT
+from apps.audit.models import R_LEVEL_DICT, Company
 from docxtpl import DocxTemplate
 import logging
 import re
@@ -130,3 +130,27 @@ def deep_clean(data):
         return data
     else:
         return data  # 保持数字、布尔值等不变
+
+def export_atask_report(year: int, company: str):
+    """导出审计报告"""
+    templ = os.path.join(BASE_DIR, "media/muban/XXXX有限公司安全审计报告.docx")
+    company = Company.objects.get(id=company)
+    atasks = Atask.objects.filter(year=year, company__id=company)
+    if atasks.count() == 1:
+        return ""
+    data = {}
+    data["company_name"] = atask.company.name
+    data["dates"] = f'{atask.start_date.strftime("%Y年%m月%d日")}至{atask.end_date.strftime("%Y年%m月%d日")}' if atask.start_date and atask.end_date else ""
+    data["leader_name"] = atask.leader.name
+    data["member_name_list"] = list(atask.team.values_list("member__name", flat=True))
+    data["member_name_list"].remove(atask.leader.name)
+    data["member_names"] = ','.join(data["member_name_list"])
+    data["member_count"] = len(data["member_name_list"]) + 1
+    data["days"] = (atask.end_date - atask.start_date).days + 1
+    
+    docx = DocxTemplate(templ)
+    docx.render(data)
+    path = f'/media/temp/{atask.year}_{atask.company.name}_安全审计报告.docx'
+    docx.save(BASE_DIR + path)
+    return path
+    

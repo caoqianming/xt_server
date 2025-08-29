@@ -15,7 +15,7 @@ from apps.audit.service import daoru_standard, daoru_issue, sendMail
 from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
 from rest_framework import serializers
-from apps.audit.service_2 import export_issue_docx
+from apps.audit.service_2 import export_issue_docx, export_atask_report
 from apps.utils.export import export_excel
 from apps.audit.m_ppt import export_pptx
 from apps.utils.permission import has_perm
@@ -180,6 +180,15 @@ class AtaskViewSet(CustomModelViewSet):
         ins:Atask = self.get_object()
         ins.init()
         return Response()
+    
+    @action(methods=['get'], detail=True, perms_map={'get': '*'})
+    def export_report(self, request, *args, **kwargs):
+        ins:Atask = self.get_object()
+        if self.request.user.is_superuser or has_perm(self.request.user, ["atask.udpate"]) or ins.leader == request.user:
+            pass
+        else:
+            raise ParseError("仅组长可操作")
+        return Response({'path': export_atask_report(ins)})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}
