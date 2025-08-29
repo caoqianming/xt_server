@@ -56,6 +56,8 @@ def process_image(img_path, issueId):
         # 压缩图片逻辑（可选）
         img.thumbnail((1600, 1600))  # 限制最大尺寸
         buffer = BytesIO()
+        if img.mode == 'RGBA':
+            img = img.convert('RGB')
         img.save(buffer, format="JPEG", quality=85)
         buffer.seek(0)
         return buffer, img.width / img.height, issueId
