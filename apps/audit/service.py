@@ -147,7 +147,10 @@ def daoru_issue(path:str, atask: Atask, user):
         number = ws[f'a{i}'].value
         risk_level_str = ws[f'c{i}'].value
         content = ws[f'd{i}'].value
-        kill_score = int(ws[f'e{i}'].value) if ws[f'e{i}'].value else None
+        try:
+            kill_score = int(ws[f'e{i}'].value) if ws[f'e{i}'].value else None
+        except ValueError:
+            raise ParseError(f"{i}行-扣分值必须是整数")
         if not number:
             raise ParseError(f"{i}行-问题编号不存在")
         if standarditem is None:
