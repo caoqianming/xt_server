@@ -116,11 +116,27 @@ class BaseModel(models.Model):
     @classmethod
     def safe_get_or_create(cls, defaults=None, **kwargs):
         defaults = defaults or {}
-        lock_data = {**kwargs, **defaults}
-        lock_hash = hashlib.md5(str(lock_data).encode()).hexdigest()
-        lock_key = f"safe_get_or_create:{cls.__name__}:{lock_hash}"
-        with cache.lock(lock_key, timeout=10):
-            return cls.objects.get_or_create(**kwargs, defaults=defaults)
+        
+        for attempt in range(3):
+                try:
+                    with transaction.atomic():
+                        # 先尝试获取（带锁）
+                        try:
+                            obj = cls.objects.select_for_update().get(**kwargs)
+                            return obj, False
+                        except cls.DoesNotExist:
+                            # 不存在则创建
+                            obj = cls(**kwargs, **defaults)
+                            obj.save()
+                            return obj, True
+                except IntegrityError:
+                    # 发生唯一约束冲突时重试
+                    if attempt == 2:
+                        raise
+                    time.sleep(0.1 * (attempt + 1))
+                except Exception:
+                    # 其他异常直接抛出
+                    raise
         
         
     def handle_parent(self):
