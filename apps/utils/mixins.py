@@ -323,6 +323,7 @@ class MyLoggingMixin(object):
         response = super().finalize_response(
             request, response, *args, **kwargs
         )
+        self.log["response_ms"] = self._get_response_ms()
         # Ensure backward compatibility for those using _should_log hook
         should_log = (
             self._should_log if hasattr(self, "_should_log") else self.should_log
@@ -351,7 +352,7 @@ class MyLoggingMixin(object):
                     "method": request.method,
                     "query_params": self._clean_data(request.query_params.dict()),
                     "user": self._get_user(request),
-                    "response_ms": self._get_response_ms(),
+                    # "response_ms": self._get_response_ms(),
                     "response": self._clean_data(rendered_content),
                     "status_code": response.status_code,
                     "agent": self._get_agent(request),
@@ -445,7 +446,8 @@ class MyLoggingMixin(object):
         By default, check if the request method is in logging_methods.
         """
         return self.logging_methods == "__all__" or response.status_code > 404 or response.status_code == 400 \
-            or (request.method in self.logging_methods and response.status_code not in [401, 403, 404])
+            or (request.method in self.logging_methods and response.status_code not in [401, 403, 404])\
+            or (self.log.get("response_ms", 0) > 2000)
 
     def _clean_data(self, data):
         """
