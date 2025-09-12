@@ -20,6 +20,7 @@ from drf_yasg.utils import swagger_auto_schema
 import json
 from django.db import connection
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import NotSupportedError
 
 class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
     """
@@ -106,9 +107,11 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
             filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
             
             try:
-                obj = queryset.select_for_update().get(**filter_kwargs)
+                obj = queryset.get(**filter_kwargs)
+                l_obj = queryset.model.objects.select_for_update().get(pk=obj.pk)
                 self.check_object_permissions(self.request, obj)
-                return obj
+                return l_obj
+                        
             except ObjectDoesNotExist:
                 raise Http404
         else:
