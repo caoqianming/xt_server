@@ -22,6 +22,10 @@ from django.db import connection
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
+def enable_transaction(func):
+    """装饰器 标记这个action需要事务"""
+    func._enable_transaction = True
+    return func
 
 class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
     """
@@ -72,18 +76,14 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
     
     def _should_use_transaction(self, request):
         """判断当前请求是否需要事务"""
-        # 标准的写操作需要事务
-        if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
-            # 但还要看具体是哪个action
-            action = self.action_map.get(request.method.lower(), {}).get(request.method.lower())
-            if action in ['create', 'update', 'partial_update', 'destroy']:
-                return True
-        
-        # 自定义的action：可以通过在action方法上添加装饰器或特殊属性来判断
-        action = getattr(self, self.action, None) if self.action else None
-        if action and getattr(action, 'requires_transaction', False):
+       # 1. 标准写操作需要事务
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return True
-            
+        action_method = getattr(self, self.action, None)
+        if not action_method:
+            return False
+        elif hasattr(action_method, '_enable_transaction'):
+            return True
         return False
         
     def finalize_response(self, request, response, *args, **kwargs):
