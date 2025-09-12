@@ -20,12 +20,6 @@ from drf_yasg.utils import swagger_auto_schema
 import json
 from django.db import connection
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-
-def enable_transaction(func):
-    """装饰器 标记这个action需要事务"""
-    func._enable_transaction = True
-    return func
 
 class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
     """
@@ -66,26 +60,6 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
             cls._initialized = True
         return super().__new__(cls)
     
-    def dispatch(self, request, *args, **kwargs):
-        # 判断是否需要事务
-        if self._should_use_transaction(request):
-            with transaction.atomic():
-                return super().dispatch(request, *args, **kwargs)
-        else:
-            return super().dispatch(request, *args, **kwargs)
-    
-    def _should_use_transaction(self, request):
-        """判断当前请求是否需要事务"""
-       # 1. 标准写操作需要事务
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return True
-        action_method = getattr(self, self.action, None)
-        if not action_method:
-            return False
-        elif hasattr(action_method, '_enable_transaction'):
-            return True
-        return False
-        
     def finalize_response(self, request, response, *args, **kwargs):
         if self.hash_k and self.cache_seconds:
             cache.set(self.hash_k, response.data,

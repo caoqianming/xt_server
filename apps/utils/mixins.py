@@ -18,6 +18,7 @@ from apps.utils.serializers import PkSerializer
 from rest_framework.decorators import action
 from apps.utils.serializers import ComplexSerializer
 from django.db.models import F
+from django.db import transaction
 
 # 实例化myLogger
 myLogger = logging.getLogger('log')
@@ -80,7 +81,8 @@ class BulkCreateModelMixin(CreateModelMixin):
 
     def after_bulk_create(self, objs):
         pass
-
+    
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """创建(支持批量)
 
@@ -103,6 +105,7 @@ class BulkUpdateModelMixin(UpdateModelMixin):
     def after_bulk_update(self, objs):
         pass
     
+    @transaction.atomic
     def partial_update(self, request, *args, **kwargs):
         """部分更新(支持批量)
 
@@ -111,6 +114,7 @@ class BulkUpdateModelMixin(UpdateModelMixin):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
     
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         """更新(支持批量)
 
@@ -145,6 +149,7 @@ class BulkUpdateModelMixin(UpdateModelMixin):
 class BulkDestroyModelMixin(DestroyModelMixin):
 
     @swagger_auto_schema(request_body=PkSerializer)
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         """删除(支持批量)
 
