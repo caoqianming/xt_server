@@ -9,7 +9,6 @@ from django.utils.timezone import now
 from user_agents import parse
 import logging
 from rest_framework.response import Response
-from django.db import transaction
 from rest_framework.exceptions import ParseError, ValidationError
 from apps.utils.errors import PKS_ERROR
 from rest_framework.generics import get_object_or_404
@@ -91,10 +90,9 @@ class BulkCreateModelMixin(CreateModelMixin):
         many = False
         if isinstance(rdata, list):
             many = True
-        with transaction.atomic():
-            sr = self.get_serializer(data=rdata, many=many)
-            sr.is_valid(raise_exception=True)
-            self.perform_create(sr)
+        sr = self.get_serializer(data=rdata, many=many)
+        sr.is_valid(raise_exception=True)
+        self.perform_create(sr)
         if many:
             self.after_bulk_create(sr.data)
         return Response(sr.data, status=201)
@@ -124,16 +122,15 @@ class BulkUpdateModelMixin(UpdateModelMixin):
             queryset = self.filter_queryset(self.get_queryset())
             objs = []
             if isinstance(request.data, list):
-                with transaction.atomic():
-                    for ind, item in enumerate(request.data):
-                        obj = get_object_or_404(queryset, id=item['id'])
-                        sr = self.get_serializer(obj, data=item, partial=partial)
-                        if not sr.is_valid():
-                            err_dict = { f'第{ind+1}': sr.errors}
-                            raise ValidationError(err_dict)
-                        self.perform_update(sr)  # 用自带的更新,可能需要做其他操作
-                        objs.append(sr.data)
-                    self.after_bulk_update(objs)
+                for ind, item in enumerate(request.data):
+                    obj = get_object_or_404(queryset, id=item['id'])
+                    sr = self.get_serializer(obj, data=item, partial=partial)
+                    if not sr.is_valid():
+                        err_dict = { f'第{ind+1}': sr.errors}
+                        raise ValidationError(err_dict)
+                    self.perform_update(sr)  # 用自带的更新,可能需要做其他操作
+                    objs.append(sr.data)
+                self.after_bulk_update(objs)
             else:
                 raise ParseError('提交数据非列表')
             return Response(objs)
