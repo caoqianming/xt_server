@@ -109,10 +109,10 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
             try:
                 obj = queryset.get(**filter_kwargs)
                 l_obj = queryset.model.objects.select_for_update().get(pk=obj.pk)
-                self.check_object_permissions(self.request, obj)
+                self.check_object_permissions(self.request, l_obj)
                 return l_obj
                         
-            except ObjectDoesNotExist:
+            except queryset.model.DoesNotExist:
                 raise Http404
         else:
             # 其他情况：普通查询
