@@ -119,16 +119,15 @@ class BaseModel(models.Model):
         
         for attempt in range(3):
                 try:
-                    with transaction.atomic():
-                        # 先尝试获取（带锁）
-                        try:
-                            obj = cls.objects.select_for_update().get(**kwargs)
-                            return obj, False
-                        except cls.DoesNotExist:
-                            # 不存在则创建
-                            obj = cls(**kwargs, **defaults)
-                            obj.save()
-                            return obj, True
+                    # 先尝试获取（带锁）
+                    try:
+                        obj = cls.objects.select_for_update().get(**kwargs)
+                        return obj, False
+                    except cls.DoesNotExist:
+                        # 不存在则创建
+                        obj = cls(**kwargs, **defaults)
+                        obj.save()
+                        return obj, True
                 except IntegrityError:
                     # 发生唯一约束冲突时重试
                     if attempt == 2:
@@ -148,32 +147,32 @@ class BaseModel(models.Model):
         if not self.id:
             is_create = True
             self.id = idWorker.get_id()
-        with transaction.atomic():
-            old_parent = None
-            need_handle_parent = False
-            if hasattr(self, "parent"):
-                if is_create:
+
+        old_parent = None
+        need_handle_parent = False
+        if hasattr(self, "parent"):
+            if is_create:
+                need_handle_parent = True
+            else:
+                try:
+                    old_parent = self.__class__.objects.get(id=self.id).parent
+                except Exception:
+                    self.parent = None
                     need_handle_parent = True
-                else:
-                    try:
-                        old_parent = self.__class__.objects.get(id=self.id).parent
-                    except Exception:
-                        self.parent = None
-                        need_handle_parent = True
-                    if self.parent != old_parent:
-                        need_handle_parent = True
-            try:
+                if self.parent != old_parent:
+                    need_handle_parent = True
+        try:
+            ins = super().save(*args, **kwargs)
+        except IntegrityError as e:
+            if is_create:
+                time.sleep(0.01)
+                self.id = idWorker.get_id()
                 ins = super().save(*args, **kwargs)
-            except IntegrityError as e:
-                if is_create:
-                    time.sleep(0.01)
-                    self.id = idWorker.get_id()
-                    ins = super().save(*args, **kwargs)
-                raise e
-            # 处理父级
-            if need_handle_parent:
-                self.handle_parent()
-            return ins
+            raise e
+        # 处理父级
+        if need_handle_parent:
+            self.handle_parent()
+        return ins
 
 
 class SoftModel(BaseModel):
