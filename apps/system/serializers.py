@@ -272,12 +272,10 @@ class DeptCreateUpdateSerializer(CustomModelSerializer):
         model = Dept
         exclude = EXCLUDE_FIELDS + ['third_info']
 
-    @transaction.atomic
     def create(self, validated_data):
         ins = super().create(validated_data)
         return ins
 
-    @transaction.atomic
     def update(self, instance, validated_data):
         ins = super().update(instance, validated_data)
         return ins
