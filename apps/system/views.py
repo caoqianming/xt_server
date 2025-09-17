@@ -665,7 +665,6 @@ class MyScheduleViewSet(CustomListModelMixin, BulkCreateModelMixin, BulkDestroyM
             return get_description(f"{data['minute']} {data['hour']} {data['day_of_month']} {data['month_of_year']} {data['day_of_week']}")
         return ''
 
-    @transaction.atomic
     def perform_create(self, serializer):
         vdata = serializer.validated_data
         vdata['create_by'] = self.request.user  # 不可少
