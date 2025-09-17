@@ -8,8 +8,7 @@ from django_celery_beat.models import (CrontabSchedule, IntervalSchedule,
 from django_celery_results.models import TaskResult
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, ValidationError, PermissionDenied
-from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
-                                   ListModelMixin, RetrieveModelMixin)
+from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.parsers import (JSONParser,
                                     MultiPartParser)
 from rest_framework.serializers import Serializer
@@ -19,7 +18,7 @@ from rest_framework.views import APIView
 from apps.system.errors import OLD_PASSWORD_WRONG, PASSWORD_NOT_SAME, SCHEDULE_WRONG
 from apps.system.filters import DeptFilterSet, UserFilterSet
 # from django_q.models import Task as QTask, Schedule as QSchedule
-from apps.utils.mixins import (CustomCreateModelMixin, MyLoggingMixin)
+from apps.utils.mixins import (MyLoggingMixin, BulkCreateModelMixin, BulkDestroyModelMixin, CustomListModelMixin)
 from django.conf import settings
 from apps.utils.permission import ALL_PERMS
 from apps.utils.viewsets import CustomGenericViewSet, CustomModelViewSet
@@ -228,7 +227,7 @@ class PTaskViewSet(CustomModelViewSet):
         return Response()
 
 
-class PTaskResultViewSet(ListModelMixin, RetrieveModelMixin, CustomGenericViewSet):
+class PTaskResultViewSet(CustomListModelMixin, RetrieveModelMixin, CustomGenericViewSet):
     """
     list:任务执行结果列表
 
@@ -372,7 +371,7 @@ class RoleViewSet(CustomModelViewSet):
     ordering = ['create_time']
 
 
-class PostRoleViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, CustomGenericViewSet):
+class PostRoleViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomListModelMixin, CustomGenericViewSet):
     """岗位/角色关系
 
     岗位/角色关系
@@ -384,7 +383,7 @@ class PostRoleViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Custo
     filterset_fields = ['post', 'role']
 
 
-class UserPostViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, CustomGenericViewSet):
+class UserPostViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomListModelMixin, CustomGenericViewSet):
     """用户/岗位关系
 
     用户/岗位关系
@@ -397,31 +396,29 @@ class UserPostViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Custo
     ordering = ['sort', 'create_time']
 
     def perform_create(self, serializer):
-        with transaction.atomic():
-            instance = serializer.save()
-            user = instance.user
-            up = UserPost.objects.filter(user=user).order_by(
-                'sort', 'create_time').first()
-            if up:
-                user.belong_dept = up.dept
-                user.post = up.post
-                user.update_by = self.request.user
-                user.save()
-
-    def perform_destroy(self, instance):
-        with transaction.atomic():
-            user = instance.user
-            instance.delete()
-            up = UserPost.objects.filter(user=user).order_by(
-                'sort', 'create_time').first()
-            if up:
-                user.belong_dept = up.dept
-                user.post = up.post
-            else:
-                user.belong_dept = None
-                user.post = None
+        instance = serializer.save()
+        user = instance.user
+        up = UserPost.objects.filter(user=user).order_by(
+            'sort', 'create_time').first()
+        if up:
+            user.belong_dept = up.dept
+            user.post = up.post
             user.update_by = self.request.user
             user.save()
+
+    def perform_destroy(self, instance):
+        user = instance.user
+        instance.delete()
+        up = UserPost.objects.filter(user=user).order_by(
+            'sort', 'create_time').first()
+        if up:
+            user.belong_dept = up.dept
+            user.post = up.post
+        else:
+            user.belong_dept = None
+            user.post = None
+        user.update_by = self.request.user
+        user.save()
 
 
 class UserViewSet(CustomModelViewSet):
@@ -560,7 +557,7 @@ class UserViewSet(CustomModelViewSet):
         return Response()
 
 
-class FileViewSet(CustomCreateModelMixin, RetrieveModelMixin, ListModelMixin, CustomGenericViewSet):
+class FileViewSet(BulkCreateModelMixin, RetrieveModelMixin, CustomListModelMixin, CustomGenericViewSet):
     """文件上传
 
     list:
@@ -601,7 +598,7 @@ class FileViewSet(CustomCreateModelMixin, RetrieveModelMixin, ListModelMixin, Cu
         instance.save()
 
 
-class ApkViewSet(MyLoggingMixin, ListModelMixin, CreateModelMixin, GenericViewSet):
+class ApkViewSet(MyLoggingMixin, CustomListModelMixin, BulkCreateModelMixin, GenericViewSet):
     perms_map = {'get': '*', 'post': 'apk.upload'}
     serializer_class = ApkSerializer
 
@@ -642,7 +639,7 @@ class ApkViewSet(MyLoggingMixin, ListModelMixin, CreateModelMixin, GenericViewSe
         return Response()
 
 
-class MyScheduleViewSet(ListModelMixin, CreateModelMixin, DestroyModelMixin, CustomGenericViewSet):
+class MyScheduleViewSet(CustomListModelMixin, BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {'get': '*', 'post': '*',
                  'delete': 'myschedule.delete'}
     serializer_class = MyScheduleSerializer

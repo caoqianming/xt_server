@@ -239,6 +239,7 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
             raise ParseError('请指定查询分类')
         return super().filter_queryset(queryset)
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
         新建工单
@@ -263,25 +264,25 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
                     save_ticket_data[key] = ticket_data[key]
         else:
             save_ticket_data = ticket_data
-        with transaction.atomic():
-            ticket = serializer.save(state=start_state,
-                                     create_by=request.user,
-                                     create_time=timezone.now(),
-                                     act_state=Ticket.TICKET_ACT_STATE_DRAFT,
-                                     belong_dept=request.user.belong_dept,
-                                     ticket_data=save_ticket_data)  # 先创建出来
-            # 更新title和sn
-            title = vdata.get('title', '')
-            title_template = ticket.workflow.title_template
-            if title_template:
-                all_ticket_data = {**rdata, **ticket_data}
-                title = title_template.format(**all_ticket_data)
-            sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
-            ticket.sn = sn
-            ticket.title = title
-            ticket.save()
-            ticket = WfService.handle_ticket(ticket=ticket, transition=transition, new_ticket_data=ticket_data,
-                                             handler=request.user, created=True)
+
+        ticket = serializer.save(state=start_state,
+                                    create_by=request.user,
+                                    create_time=timezone.now(),
+                                    act_state=Ticket.TICKET_ACT_STATE_DRAFT,
+                                    belong_dept=request.user.belong_dept,
+                                    ticket_data=save_ticket_data)  # 先创建出来
+        # 更新title和sn
+        title = vdata.get('title', '')
+        title_template = ticket.workflow.title_template
+        if title_template:
+            all_ticket_data = {**rdata, **ticket_data}
+            title = title_template.format(**all_ticket_data)
+        sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
+        ticket.sn = sn
+        ticket.title = title
+        ticket.save()
+        ticket = WfService.handle_ticket(ticket=ticket, transition=transition, new_ticket_data=ticket_data,
+                                            handler=request.user, created=True)
         return Response(TicketSerializer(instance=ticket).data)
 
     @action(methods=['get'], detail=False, perms_map={'get': '*'})
@@ -297,6 +298,7 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         return Response(ret)
 
     @action(methods=['post'], detail=True, perms_map={'post': '*'})
+    @transaction.atomic
     def handle(self, request, pk=None):
         """
         处理工单
@@ -307,13 +309,13 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         vdata = serializer.validated_data
         new_ticket_data = ticket.ticket_data
         new_ticket_data.update(**vdata['ticket_data'])
-        with transaction.atomic():
-            ticket = WfService.handle_ticket(ticket=ticket, transition=vdata['transition'],
-                                             new_ticket_data=new_ticket_data, handler=request.user,
-                                             suggestion=vdata.get('suggestion', ''))
+        ticket = WfService.handle_ticket(ticket=ticket, transition=vdata['transition'],
+                                            new_ticket_data=new_ticket_data, handler=request.user,
+                                            suggestion=vdata.get('suggestion', ''))
         return Response(TicketSerializer(instance=ticket).data)
 
     @action(methods=['post'], detail=True, perms_map={'post': '*'})
+    @transaction.atomic
     def deliver(self, request, pk=None):
         """
         转交工单
@@ -325,15 +327,14 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         vdata = serializer.validated_data  # 校验之后的数据
         if not ticket.state.enable_deliver:
             raise ParseError('不允许转交')
-        with transaction.atomic():
-            ticket.participant_type = State.PARTICIPANT_TYPE_PERSONAL
-            ticket.participant = vdata['target_user']
-            ticket.save()
-            TicketFlow.objects.create(ticket=ticket, state=ticket.state,
-                                      ticket_data=WfService.get_ticket_all_field_value(ticket),
-                                      suggestion=vdata.get('suggestion', ''), participant_type=State.PARTICIPANT_TYPE_PERSONAL,
-                                      intervene_type=Transition.TRANSITION_INTERVENE_TYPE_DELIVER,
-                                      participant=request.user, transition=None)
+        ticket.participant_type = State.PARTICIPANT_TYPE_PERSONAL
+        ticket.participant = vdata['target_user']
+        ticket.save()
+        TicketFlow.objects.create(ticket=ticket, state=ticket.state,
+                                    ticket_data=WfService.get_ticket_all_field_value(ticket),
+                                    suggestion=vdata.get('suggestion', ''), participant_type=State.PARTICIPANT_TYPE_PERSONAL,
+                                    intervene_type=Transition.TRANSITION_INTERVENE_TYPE_DELIVER,
+                                    participant=request.user, transition=None)
         return Response()
 
     @action(methods=['get'], detail=True, perms_map={'get': '*'})
