@@ -1,4 +1,6 @@
 from django.db import connection
+from django.utils import timezone
+from datetime import datetime
 
 def execute_raw_sql(sql: str, params=None):
     """执行原始sql并返回rows, columns数据
@@ -23,7 +25,7 @@ def format_sqldata(columns, rows):
     return [columns] + rows, [dict(zip(columns, row)) for row in rows]
 
 
-def query_all_dict(sql, params=None):
+def query_all_dict(sql, params=None, with_time_format=False):
     '''
     查询所有结果返回字典类型数据
     :param sql:
@@ -36,9 +38,19 @@ def query_all_dict(sql, params=None):
         else:
             cursor.execute(sql)
         columns  = [desc[0] for desc in cursor.description]
+        if with_time_format:
+            results = []
+            for row in cursor.fetchall():
+                row_dict = {}
+                for col, val in zip(columns, row):
+                    if isinstance(val, datetime):
+                        val = timezone.make_naive(val).strftime("%Y-%m-%d %H:%M:%S")
+                    row_dict[col] = val
+                results.append(row_dict)
+            return results
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-def query_one_dict(sql, params=None):
+def query_one_dict(sql, params=None, with_time_format=False):
     """
     查询一个结果返回字典类型数据
     :param sql:
@@ -49,6 +61,13 @@ def query_one_dict(sql, params=None):
         cursor.execute(sql, params or ())  # 更简洁的参数处理
         columns = [desc[0] for desc in cursor.description]
         row = cursor.fetchone()
+        if with_time_format:
+            row_dict = {}
+            for col, val in zip(columns, row):
+                if isinstance(val, datetime):
+                    val = timezone.make_naive(val).strftime("%Y-%m-%d %H:%M:%S")
+                row_dict[col] = val
+            return row_dict
         return dict(zip(columns, row)) if row else None  # 安全处理None情况
     
 import pymysql
