@@ -21,6 +21,7 @@ class Workflow(CommonAModel):
         '标题模板', max_length=50, default='{title}', null=True, blank=True, help_text='工单字段的值可以作为参数写到模板中，格式如：你有一个待办工单:{title}')
     content_template = models.CharField(
         '内容模板', max_length=1000, default='标题:{title}, 创建时间:{create_time}', null=True, blank=True, help_text='工单字段的值可以作为参数写到模板中，格式如：标题:{title}, 创建时间:{create_time}')
+    view_path = models.TextField('前端自定义页面路径', null=True, blank=True)
 
     class Meta:
         verbose_name = '工作流'
