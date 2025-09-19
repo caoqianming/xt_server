@@ -27,7 +27,7 @@ class StateSerializer(CustomModelSerializer):
 class WorkflowSimpleSerializer(CustomModelSerializer):
     class Meta:
         model = Workflow
-        fields = ['id', 'name', 'key']
+        fields = ['id', 'name', 'key', 'view_path']
 
 
 class StateSimpleSerializer(CustomModelSerializer):
