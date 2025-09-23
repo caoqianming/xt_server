@@ -442,11 +442,17 @@ class WfService(object):
             last_log.intervene_type == Transition.TRANSITION_INTERVENE_TYPE_DELIVER or
                 ticket.in_add_node):
             # 如果状态变化或是转交加签的情况再发送通知
-            Thread(target=send_ticket_notice_t, args=(ticket,), daemon=True).start()
+            cls.send_ticket_notice(ticketflow=last_log)
 
         # 如果目标状态是脚本则异步执行
         if state.participant_type == State.PARTICIPANT_TYPE_ROBOT:
             run_task.delay(ticket_id=ticket.id)
+    
+    @classmethod
+    def send_ticket_notice(cls, ticketflow:TicketFlow):
+        # 根据ticketflow发送通知
+        Thread(target=send_ticket_notice_t, args=(ticketflow,), daemon=True).start()
+
 
     @classmethod
     def close_by_task(cls, ticket: Ticket, suggestion: str):
@@ -479,10 +485,13 @@ class WfService(object):
                                   suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_PERSONAL,
                                   intervene_type=Transition.TRANSITION_INTERVENE_TYPE_RETREAT,
                                   participant=handler, transition=None)
-def send_ticket_notice_t(ticket: Ticket):
+        cls.task_ticket(ticket=ticket)
+
+def send_ticket_notice_t(ticketflow: TicketFlow):
     """
     发送通知
     """
+    ticket = ticketflow.ticket
     params = {'workflow': ticket.workflow.name, 'state': ticket.state.name}
     if ticket.participant_type == 1:
         # 发送短信通知

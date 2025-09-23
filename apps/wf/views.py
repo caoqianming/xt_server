@@ -330,11 +330,12 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         ticket.participant_type = State.PARTICIPANT_TYPE_PERSONAL
         ticket.participant = vdata['target_user']
         ticket.save()
-        TicketFlow.objects.create(ticket=ticket, state=ticket.state,
+        tf = TicketFlow.objects.create(ticket=ticket, state=ticket.state,
                                     ticket_data=WfService.get_ticket_all_field_value(ticket),
                                     suggestion=vdata.get('suggestion', ''), participant_type=State.PARTICIPANT_TYPE_PERSONAL,
                                     intervene_type=Transition.TRANSITION_INTERVENE_TYPE_DELIVER,
                                     participant=request.user, transition=None)
+        WfService.send_ticket_notice(ticketflow=tf)
         return Response()
 
     @action(methods=['get'], detail=True, perms_map={'get': '*'})
@@ -382,11 +383,12 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
             ticket.save()
             # 接单日志
             # 更新工单流转记录
-            TicketFlow.objects.create(ticket=ticket, state=ticket.state,
+            tf = TicketFlow.objects.create(ticket=ticket, state=ticket.state,
                                       ticket_data=WfService.get_ticket_all_field_value(ticket),
                                       suggestion='', participant_type=State.PARTICIPANT_TYPE_PERSONAL,
                                       intervene_type=Transition.TRANSITION_ATTRIBUTE_TYPE_ACCEPT,
                                       participant=request.user, transition=None)
+            WfService.send_ticket_notice(ticketflow=tf)
             return Response()
         else:
             raise ParseError('无需接单')
@@ -421,11 +423,12 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         ticket.save()
         # 更新流转记录
         suggestion = request.data.get('suggestion', '')  # 加签说明
-        TicketFlow.objects.create(ticket=ticket, state=ticket.state,
+        tf = TicketFlow.objects.create(ticket=ticket, state=ticket.state,
                                   ticket_data=WfService.get_ticket_all_field_value(ticket),
                                   suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_PERSONAL,
                                   intervene_type=Transition.TRANSITION_INTERVENE_TYPE_ADD_NODE,
                                   participant=request.user, transition=None)
+        WfService.send_ticket_notice(ticketflow=tf)
         return Response()
 
     @action(methods=['post'], detail=True, perms_map={'post': '*'}, serializer_class=TicketAddNodeEndSerializer)
@@ -445,11 +448,12 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         ticket.save()
         # 更新流转记录
         suggestion = request.data.get('suggestion', '')  # 加签意见
-        TicketFlow.objects.create(ticket=ticket, state=ticket.state,
+        tf = TicketFlow.objects.create(ticket=ticket, state=ticket.state,
                                   ticket_data=WfService.get_ticket_all_field_value(ticket),
                                   suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_PERSONAL,
                                   intervene_type=Transition.TRANSITION_INTERVENE_TYPE_ADD_NODE_END,
                                   participant=request.user, transition=None)
+        WfService.send_ticket_notice(ticketflow=tf)
         return Response()
 
     @action(methods=['post'], detail=True, perms_map={'post': '*'},
