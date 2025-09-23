@@ -7,7 +7,8 @@ from apps.utils.decorators import auto_log
 # 实例化myLogger
 myLogger = logging.getLogger('log')
 
-@auto_log(name='阿里云短信', raise_exception=True, send_mail=True)
+
+@auto_log(name='阿里云短信', raise_exception=True, send_mail=False)
 def send_sms(phone: str, template_code: int, template_param: dict):
     from aliyunsdkcore.client import AcsClient
     from aliyunsdkcore.request import CommonRequest
