@@ -85,3 +85,4 @@ class ComplexSerializer(serializers.Serializer):
     ordering = serializers.CharField(required=False)
     querys = serializers.ListField(child=QuerySerializer(
         many=True), label="查询列表", required=False)
+    annotate_field_list = serializers.ListField(child=serializers.CharField(), label="RawSQL字段列表", required=False)

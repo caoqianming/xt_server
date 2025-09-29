@@ -241,6 +241,8 @@ class ComplexQueryMixin:
         vdata = sr.validated_data
         queryset = self.get_queryset()
         querys = vdata.get('querys', [])
+        annotate_field_list = vdata.get('annotate_field_list', [])
+
         if not querys:
             new_qs = queryset
         else:
@@ -262,17 +264,29 @@ class ComplexQueryMixin:
                     new_qs = new_qs | one_qs
             except Exception as e:
                 raise ParseError(str(e))
+        
+        if annotate_field_list:
+            annotate_dict = getattr(self, "annotate_dict", {})
+            if annotate_dict:
+                filtered_annotate_dict = { key: annotate_dict[key] for key in annotate_field_list if key in annotate_dict}
+                new_qs = new_qs.annotate(**filtered_annotate_dict)
+
         ordering = vdata.get('ordering', None)
         if not ordering:
             ordering = getattr(self, 'ordering', None)
         if isinstance(ordering, str):
+            ordering = ordering.replace('\n', '').replace(' ', '')
             ordering = ordering.split(',')
+        order_fields = []
         if ordering:
             for item in ordering:
                 if item.startswith('-'):
-                    new_qs = new_qs.order_by(F(item[1:]).desc(nulls_last=True))
+                    # JSONField 排序只能用字符串，不要 F
+                    order_fields.append(F(item[1:]).desc(nulls_last=True) if '__' not in item else item)
                 else:
-                    new_qs = new_qs.order_by(item)
+                    order_fields.append(F(item).asc(nulls_last=True) if '__' not in item else item)
+        new_qs = new_qs.order_by(*order_fields)
+
         page = self.paginate_queryset(new_qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
