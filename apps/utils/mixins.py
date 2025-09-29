@@ -193,6 +193,8 @@ class CustomRetrieveModelMixin(RetrieveModelMixin):
 
         给dict返回数据添加额外信息
         """
+        if hasattr(self, 'add_info_for_list'):
+            return self.add_info_for_list([data])[0]
         return data
 
 class CustomListModelMixin(ListModelMixin):
