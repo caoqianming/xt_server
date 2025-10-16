@@ -26,7 +26,7 @@ class WfService(object):
         """
         获取工作流流转列表
         """
-        return Transition.objects.filter(workflow=workflow, is_deleted=False).order_by("attribute_type", "id")
+        return Transition.objects.filter(workflow=workflow, is_deleted=False)
 
     @staticmethod
     def get_workflow_start_state(workflow: Workflow):
@@ -77,7 +77,7 @@ class WfService(object):
         """
         获取状态可执行的操作
         """
-        return Transition.objects.filter(is_deleted=False, source_state=state).all()
+        return Transition.objects.filter(is_deleted=False, source_state=state).all().order_by("attribute_type", "id")
 
     @classmethod
     def get_ticket_steps(cls, ticket: Ticket):
