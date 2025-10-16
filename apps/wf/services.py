@@ -26,7 +26,7 @@ class WfService(object):
         """
         获取工作流流转列表
         """
-        return Transition.objects.filter(workflow=workflow, is_deleted=False)
+        return Transition.objects.filter(workflow=workflow, is_deleted=False).order_by("attribute_type", "id")
 
     @staticmethod
     def get_workflow_start_state(workflow: Workflow):
