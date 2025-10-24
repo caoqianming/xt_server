@@ -2,7 +2,7 @@ from django.db import connection
 from django.utils import timezone
 from datetime import datetime
 
-def execute_raw_sql(sql: str, params=None):
+def execute_raw_sql(sql: str, params=None, timeout=30):
     """执行原始sql并返回rows, columns数据
 
     Args:
@@ -10,7 +10,7 @@ def execute_raw_sql(sql: str, params=None):
         params (_type_, optional): 参数列表. Defaults to None.
     """
     with connection.cursor() as cursor:
-        cursor.execute("SET statement_timeout TO %s;", [30000])
+        cursor.execute(f"SET statement_timeout TO '{int(timeout*1000)}ms';")
         if params:
             cursor.execute(sql, params=params)
         else:
