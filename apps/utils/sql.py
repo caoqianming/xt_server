@@ -10,7 +10,8 @@ def execute_raw_sql(sql: str, params=None, timeout=30):
         params (_type_, optional): 参数列表. Defaults to None.
     """
     with connection.cursor() as cursor:
-        cursor.execute(f"SET statement_timeout TO '{int(timeout*1000)}ms';")
+        if timeout:
+            cursor.execute(f"SET statement_timeout TO '{int(timeout*1000)}ms';")
         if params:
             cursor.execute(sql, params=params)
         else:
