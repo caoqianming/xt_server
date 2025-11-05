@@ -431,4 +431,8 @@ class AtaskIssueViewSet(CustomModelViewSet):
                     i["kill_score"],
                     i["create_by_name"], i["create_time"]]
                 )
-        return Response({'path': export_excel(field_data, data, '问题清单')})
+        if with_photos:
+            path = export_excel(field_data, data, '问题清单', img_field_index=[9, 10])
+        else:
+            path = export_excel(field_data, data, '问题清单')
+        return Response({'path': path})
