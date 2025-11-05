@@ -6,6 +6,8 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.drawing.image import Image
 from openpyxl.utils import get_column_letter
 from docxtpl import DocxTemplate
+from PIL import Image as PILImage
+from io import BytesIO
 
 
 def export_docx(template_path: str, context_data: dict, file_name: str):
@@ -95,6 +97,28 @@ def export_excel(field_data: list, data: list, FileName: str, img_field_index: l
     # 确定栏位宽度
     col_widths = [len(str(field['name'])) for field in header_fields]
     
+    def process_image(img_path):
+        """处理单张图片并返回BytesIO"""
+        # 获取文件大小
+        file_size_kb = os.path.getsize(img_path) / 1024
+        
+        with PILImage.open(img_path) as img:
+            # 如果文件小于等于50KB，直接返回原图片
+            if file_size_kb <= 50:
+                buffer = BytesIO()
+                img.save(buffer, format=img.format if img.format else "JPEG")
+                buffer.seek(0)
+                return buffer
+            else:
+                # 限制最大尺寸
+                img.thumbnail((1600, 1600))
+                buffer = BytesIO()
+                if img.mode == 'RGBA':
+                    img = img.convert('RGB')
+                img.save(buffer, format="JPEG", quality=85)
+                buffer.seek(0)   
+                return buffer
+        
     for row_idx, row_data in enumerate(data, 2):
         for col_idx, cell_value in enumerate(row_data):
             if col_idx < len(header_fields):
@@ -109,7 +133,8 @@ def export_excel(field_data: list, data: list, FileName: str, img_field_index: l
                     try:
                         img_path = settings.BASE_DIR + str(cell_value)
                         if os.path.exists(img_path):
-                            img = Image(img_path)
+                            img_buffer = process_image(img_path)
+                            img = Image(img_buffer)
                             # 设置图片尺寸
                             img.width = 90
                             img.height = 90
