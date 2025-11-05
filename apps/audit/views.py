@@ -409,8 +409,8 @@ class AtaskIssueViewSet(CustomModelViewSet):
         for i in odata:
             if with_photos:
                 photos = i.get("photos_", [])
-                photo1 = photos[0].path if len(photos) > 0 else None
-                photo2 = photos[1].path if len(photos) > 1 else None
+                photo1 = photos[0]["path"] if len(photos) > 0 else None
+                photo2 = photos[1]["path"] if len(photos) > 1 else None
                 data.append(
                     [i['atask_company_name'],
                      i['atask_standard_name'],
