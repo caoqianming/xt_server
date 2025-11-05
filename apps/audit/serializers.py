@@ -182,3 +182,8 @@ class AtaskProblemSerializer(CustomModelSerializer):
         fields = "__all__"
         read_only_fields = EXCLUDE_FIELDS
     
+
+class AtaskIssueExportWithImgSerializer(AtaskIssueExportSerializer):
+    atask_company_name = serializers.CharField(source="atask.company.name", read_only=True)
+    atask_standard_name = serializers.CharField(source="atask.standard.name", read_only=True)
+    photos_ = FileSerializer(many=True, read_only=True, source="photos")

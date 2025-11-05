@@ -5,7 +5,7 @@ from apps.audit.models import (Standard, StandardItem, Company, Atask, AtaskIssu
 from apps.audit.serializers import (AtaskItemSerializer, StandardSerializer, StandardItemSerializer, 
                                     CompanySerializer, AtaskSerializer, AtaskTeamSerializer,
                                     AtaskItemCheckSerializer, AtaskIssueSerializer, AtaskDetailSerializer, 
-                                    AtaskIssueExportSerializer, AtaskProblemSerializer)
+                                    AtaskIssueExportSerializer, AtaskProblemSerializer, AtaskIssueExportWithImgSerializer)
 from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from django.db import transaction
@@ -297,11 +297,24 @@ class AtaskProblemViewSet(CustomModelViewSet):
 class AtaskIssueViewSet(CustomModelViewSet):
     queryset = AtaskIssue.objects.all()
     serializer_class = AtaskIssueSerializer
-    select_related_fields = ["atask", "standarditem", "create_by", "atask__standard"]
+    select_related_fields = ["atask", "standarditem", "create_by", "atask__standard", "atask__company"]
     prefetch_related_fields = ["photos"]
     filterset_class = AtaskIssueFilter
     ordering_fields = ["atask", "standarditem__number_sort", "create_time"]
     ordering = ["atask", "standarditem__number_sort", "-create_time"]
+    search_fields = ["content", "standarditem__number", "atask__company__name"]
+
+    def add_info_for_list(self, data):
+        if self.request.query_params.get("with_atask", "yes"):
+            ataskIds = {}
+            for item in data:
+                ataskIds[item["atask"]] = {}
+            atask_data = AtaskDetailSerializer(instance=Atask.objects.filter(id__in=ataskIds.keys()), many=True).data
+            for item in atask_data:
+                ataskIds[item["id"]] = item
+            for item in data:
+                item["atask_"] = ataskIds[item["atask"]]
+        return data
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -325,6 +338,8 @@ class AtaskIssueViewSet(CustomModelViewSet):
             if  (self.request.query_params.get("atask", None) 
                 or self.request.query_params.get("standitem", None)
                 or self.request.query_params.get("standitem_belong", None)):
+                pass
+            elif has_perm(self.request.user, ["ataskissue.view"]):
                 pass
             else:
                 return self.queryset.none()
@@ -374,20 +389,46 @@ class AtaskIssueViewSet(CustomModelViewSet):
         """导出excel
         导出excel
         """
-        field_data = ['一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人']
+        with_photos = request.query_params.get("with_photos", "no") == "yes"
+        field_data = ['一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人', '创建时间']
+        if with_photos:
+            field_data.insert(0, "采用标准")
+            field_data.insert(0, "审计对象")
+            field_data.append('图片1')
+            field_data.append('图片2')
         queryset = self.filter_queryset(self.get_queryset())
-        if queryset.count() > 1000:
-            raise ParseError('数据量超过1000,请筛选后导出')
-        odata = AtaskIssueExportSerializer(queryset, many=True).data
+        if queryset.count() > 300:
+            raise ParseError('数据量超过300,请筛选后导出')
+
+        if with_photos:
+            odata = AtaskIssueExportWithImgSerializer(queryset, many=True).data
+        else:
+            odata = AtaskIssueExportSerializer(queryset, many=True).data
         # 处理数据
         data = []
         for i in odata:
-            data.append(
-                [i['level_10_name'],
-                 i.get('standarditem_number', None),
-                 i['content'],
-                 R_LEVEL_DICT.get(i["risk_level"], None),
-                 i["kill_score"],
-                 i["create_by_name"]]
-            )
+            if with_photos:
+                photos = i.get("photos_", [])
+                photo1 = photos[0].path if len(photos) > 0 else None
+                photo2 = photos[1].path if len(photos) > 1 else None
+                data.append(
+                    [i['atask_company_name'],
+                     i['atask_standard_name'],
+                     i['level_10_name'],
+                    i.get('standarditem_number', None),
+                    i['content'],
+                    R_LEVEL_DICT.get(i["risk_level"], None),
+                    i["kill_score"],
+                    i["create_by_name"], i["create_time"],
+                    photo1, photo2]
+                )
+            else:
+                data.append(
+                    [i['level_10_name'],
+                    i.get('standarditem_number', None),
+                    i['content'],
+                    R_LEVEL_DICT.get(i["risk_level"], None),
+                    i["kill_score"],
+                    i["create_by_name"], i["create_time"]]
+                )
         return Response({'path': export_excel(field_data, data, '问题清单')})

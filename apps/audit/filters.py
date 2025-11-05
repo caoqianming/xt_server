@@ -34,6 +34,8 @@ class AtaskIssueFilter(filters.FilterSet):
             "atask": ["exact"],
             "standarditem": ["exact"],
             "create_by": ["exact"],
+            "standarditem__number": ["exact", "startswith"],
+            "risk_level": ["exact"],
         }
 
     def filter_standarditem_belong(self, queryset, name, value):
