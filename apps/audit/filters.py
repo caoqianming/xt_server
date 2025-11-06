@@ -35,6 +35,11 @@ class AtaskIssueFilter(filters.FilterSet):
             "standarditem": ["exact"],
             "create_by": ["exact"],
             "standarditem__number": ["exact", "startswith"],
+            "standarditem__standard__to_type": ["exact"],
+            "standarditem__level": ["exact"],
+            "content": ["contains"],
+            "atask__company__parent": ["exact"],
+            "atask__company": ["exact"],
             "risk_level": ["exact"],
         }
 
