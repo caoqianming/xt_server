@@ -248,41 +248,12 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         serializer = self.get_serializer(data=rdata)
         serializer.is_valid(raise_exception=True)
         vdata = serializer.validated_data  # 校验之后的数据
-        start_state = WfService.get_workflow_start_state(vdata['workflow'])
-        transition = vdata.pop('transition')
+        transition = vdata['transition']
+        workflow = vdata['workflow']
         ticket_data = vdata['ticket_data']
-
-        save_ticket_data = {}
-        # 校验必填项
-        if transition.field_require_check:
-            for key, value in start_state.state_fields.items():
-                if int(value) == State.STATE_FIELD_REQUIRED:
-                    if key not in ticket_data and not ticket_data[key]:
-                        raise ParseError('字段{}必填'.format(key))
-                    save_ticket_data[key] = ticket_data[key]
-                elif int(value) == State.STATE_FIELD_OPTIONAL:
-                    save_ticket_data[key] = ticket_data[key]
-        else:
-            save_ticket_data = ticket_data
-
-        ticket = serializer.save(state=start_state,
-                                    create_by=request.user,
-                                    create_time=timezone.now(),
-                                    act_state=Ticket.TICKET_ACT_STATE_DRAFT,
-                                    belong_dept=request.user.belong_dept,
-                                    ticket_data=save_ticket_data)  # 先创建出来
-        # 更新title和sn
-        title = vdata.get('title', '')
-        title_template = ticket.workflow.title_template
-        if title_template:
-            all_ticket_data = {**rdata, **ticket_data}
-            title = title_template.format(**all_ticket_data)
-        sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
-        ticket.sn = sn
-        ticket.title = title
-        ticket.save()
-        ticket = WfService.handle_ticket(ticket=ticket, transition=transition, new_ticket_data=ticket_data,
-                                            handler=request.user, created=True)
+        ticket = WfService.handle_ticket(ticket=None, transition=transition, 
+                                         workflow=workflow, new_ticket_data=ticket_data,
+                                         oinfo=rdata, handler=request.user)
         return Response(TicketSerializer(instance=ticket).data)
 
     @action(methods=['get'], detail=False, perms_map={'get': '*'})

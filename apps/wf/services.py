@@ -297,9 +297,48 @@ class WfService(object):
         return field_info_dict
 
     @classmethod
-    def handle_ticket(cls, ticket: Ticket, transition: Transition, new_ticket_data: dict = {}, handler: User = None,
-                      suggestion: str = '', created: bool = False, by_timer: bool = False,
+    def handle_ticket(cls, ticket: Ticket, transition: Transition, workflow: Workflow, new_ticket_data: dict = {}, oinfo: dict = {}, handler: User = None,
+                      suggestion: str = '', by_timer: bool = False,
                       by_task: bool = False, by_hook: bool = False):
+        just_created = False
+        if ticket is None:
+            # 创建工单逻辑
+            if transition:
+                if transition.workflow.id != workflow.id:
+                    raise ParseError("当前流转不属于该工作流")
+                workflow = transition.workflow
+                
+            start_state = WfService.get_workflow_start_state(workflow)
+            save_ticket_data = {}
+            if transition and transition.field_require_check:
+                for key, value in start_state.state_fields.items():
+                    if int(value) == State.STATE_FIELD_REQUIRED:
+                        if key not in new_ticket_data and not new_ticket_data[key]:
+                            raise ParseError('字段{}必填'.format(key))
+                        save_ticket_data[key] = new_ticket_data[key]
+                    elif int(value) == State.STATE_FIELD_OPTIONAL:
+                        save_ticket_data[key] = new_ticket_data[key]
+            else:
+                save_ticket_data = new_ticket_data
+            ticket = Ticket.objects.create(workflow=workflow,
+                            state=start_state,
+                            create_by=handler,
+                            create_time=timezone.now(),
+                            act_state=Ticket.TICKET_ACT_STATE_DRAFT,
+                            belong_dept=handler.belong_dept,
+                            ticket_data=save_ticket_data)  # 先创建出来
+            # 更新title和sn
+            title_template = ticket.workflow.title_template
+            if title_template:
+                all_ticket_data = {**oinfo, **new_ticket_data}
+                ticket_title = title_template.format(**all_ticket_data)
+            sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
+            ticket.sn = sn
+            ticket.title = ticket_title
+            ticket.save()
+            if not transition:
+                return ticket
+            just_created = True  # 刚创建的工单不需要校验权限
 
         source_state = ticket.state
         source_ticket_data = ticket.ticket_data
@@ -315,13 +354,13 @@ class WfService(object):
             f(ticket=ticket, transition=transition, new_ticket_data=new_ticket_data)
 
         # 校验处理权限
-        if handler is not None and created is False:  # 有处理人意味着系统触发校验处理权限
+        if handler is not None and just_created is False:  # 有处理人意味着系统触发校验处理权限
             result = WfService.ticket_handle_permission_check(ticket, handler)
             if result.get('permission') is False:
                 raise PermissionDenied(result.get('msg'))
 
         # 校验表单必填项目
-        if transition.field_require_check or not created:
+        if transition.field_require_check or not just_created:
             for key, value in ticket.state.state_fields.items():
                 if int(value) == State.STATE_FIELD_REQUIRED:
                     if key not in new_ticket_data or not new_ticket_data[key]:
@@ -369,7 +408,7 @@ class WfService(object):
             ticket.act_state = Ticket.TICKET_ACT_STATE_BACK
 
         # 只更新必填和可选的字段
-        if not created and transition.field_require_check:
+        if not just_created and transition.field_require_check:
             for key, value in source_state.state_fields.items():
                 if value in (State.STATE_FIELD_REQUIRED, State.STATE_FIELD_OPTIONAL):
                     if key in new_ticket_data:
@@ -384,7 +423,7 @@ class WfService(object):
                                       suggestion=suggestion, participant_type=State.PARTICIPANT_TYPE_PERSONAL,
                                       participant=handler, transition=transition)
 
-        if created:
+        if just_created:
             if source_state.participant_cc:
                 TicketFlow.objects.create(ticket=ticket, state=source_state,
                                           participant_type=0, intervene_type=Transition.TRANSITION_INTERVENE_TYPE_CC,
