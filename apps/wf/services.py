@@ -328,6 +328,7 @@ class WfService(object):
                             belong_dept=handler.belong_dept,
                             ticket_data=save_ticket_data)  # 先创建出来
             # 更新title和sn
+            ticket_title = oinfo.get("title", "")
             title_template = ticket.workflow.title_template
             if title_template:
                 all_ticket_data = {**oinfo, **new_ticket_data}
