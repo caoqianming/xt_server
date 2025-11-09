@@ -223,3 +223,10 @@ class CustomModelViewSet(BulkCreateModelMixin, BulkUpdateModelMixin, CustomListM
     """
     增强的ModelViewSet
     """
+
+
+class EuModelViewSet(BulkCreateModelMixin, CustomListModelMixin,
+                               CustomRetrieveModelMixin, BulkDestroyModelMixin, ComplexQueryMixin, CustomGenericViewSet):
+    """
+    不支持更新的增强ModelViewSet
+    """
