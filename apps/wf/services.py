@@ -297,7 +297,7 @@ class WfService(object):
         return field_info_dict
 
     @classmethod
-    def handle_ticket(cls, ticket: Ticket, transition: Transition, workflow: Workflow, new_ticket_data: dict = {}, oinfo: dict = {}, handler: User = None,
+    def handle_ticket(cls, ticket: Ticket=None, transition: Transition=None, workflow: Workflow=None, new_ticket_data: dict = {}, oinfo: dict = {}, handler: User = None,
                       suggestion: str = '', by_timer: bool = False,
                       by_task: bool = False, by_hook: bool = False):
         just_created = False
