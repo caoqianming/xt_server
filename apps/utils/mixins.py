@@ -94,10 +94,10 @@ class BulkCreateModelMixin(CreateModelMixin):
             for item in rdata:
                 if "id" in item and item["id"]:
                     raise ParseError('创建数据中不能包含id字段')
+            many = True
         else:
             if "id" in rdata and rdata["id"]:
                 raise ParseError('创建数据中不能包含id字段')
-            many = True
         sr = self.get_serializer(data=rdata, many=many)
         sr.is_valid(raise_exception=True)
         self.perform_create(sr)
