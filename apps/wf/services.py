@@ -304,7 +304,7 @@ class WfService(object):
         if ticket is None:
             # 创建工单逻辑
             if transition:
-                if transition.workflow.id != workflow.id:
+                if workflow and transition.workflow.id != workflow.id:
                     raise ParseError("当前流转不属于该工作流")
                 workflow = transition.workflow
                 
