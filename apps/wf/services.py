@@ -326,7 +326,7 @@ class WfService(object):
                             create_time=timezone.now(),
                             act_state=Ticket.TICKET_ACT_STATE_DRAFT,
                             belong_dept=handler.belong_dept,
-                            ticket_data=save_ticket_data)  # 先创建出来
+                            ticket_data=save_ticket_data, participant_type=1, participant=handler.id)  # 先创建出来
             # 更新title和sn
             ticket_title = oinfo.get("title", "")
             title_template = ticket.workflow.title_template
