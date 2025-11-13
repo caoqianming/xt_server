@@ -332,7 +332,10 @@ class WfService(object):
             title_template = ticket.workflow.title_template
             if title_template:
                 all_ticket_data = {**oinfo, **new_ticket_data}
-                ticket_title = title_template.format(**all_ticket_data)
+                try:
+                    ticket_title = title_template.format(**all_ticket_data)
+                except KeyError as e:
+                    raise ParseError(f"工单标题模板中存在未定义的变量:{e}")
             sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
             ticket.sn = sn
             ticket.title = ticket_title
