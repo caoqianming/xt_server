@@ -62,10 +62,9 @@ class WorkflowViewSet(CustomModelViewSet):
     serializer_class = WorkflowSerializer
     search_fields = ['name', 'description', 'key']
     filterset_fields = ['key', 'cate']
-    ordering_fields = ['create_time']
-    ordering = ['key', '-create_time']
+    ordering_fields = ['create_time', 'key', 'cate']
 
-    @action(methods=['get'], detail=True, perms_map={'get': '*'})
+    @action(methods=['get'], detail=False, perms_map={'get': '*'})
     def cates(self, request, pk=None):
         """
         工作流分类
