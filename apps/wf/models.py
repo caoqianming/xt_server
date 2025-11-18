@@ -9,6 +9,7 @@ class Workflow(CommonAModel):
     工作流
     """
     name = models.CharField('名称', max_length=50)
+    cate = models.CharField('分类', max_length=50, null=True, blank=True)
     key = models.CharField('工作流标识', unique=True, max_length=20, null=True, blank=True)
     sn_prefix = models.CharField('流水号前缀', max_length=50, default='hb')
     description = models.CharField('描述', max_length=200, null=True, blank=True)

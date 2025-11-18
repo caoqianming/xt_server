@@ -60,10 +60,17 @@ class WorkflowKeyInitView(APIView):
 class WorkflowViewSet(CustomModelViewSet):
     queryset = Workflow.objects.all()
     serializer_class = WorkflowSerializer
-    search_fields = ['name', 'description']
-    filterset_fields = []
+    search_fields = ['name', 'description', 'key']
+    filterset_fields = ['key', 'cate']
     ordering_fields = ['create_time']
     ordering = ['key', '-create_time']
+
+    @action(methods=['get'], detail=True, perms_map={'get': '*'})
+    def cates(self, request, pk=None):
+        """
+        工作流分类
+        """
+        return Response(Workflow.objects.filter(cate__isnull=False).values_list('cate', flat=True).distinct())
 
     @action(methods=['get'], detail=True, perms_map={'get': 'workflow.update'},
             pagination_class=None, serializer_class=StateSerializer)
