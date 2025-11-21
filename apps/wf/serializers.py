@@ -149,6 +149,7 @@ class TicketDetailSerializer(CustomModelSerializer):
     state_ = StateSimpleSerializer(source='state', read_only=True)
     ticket_data_ = serializers.SerializerMethodField()
     participant_ = serializers.SerializerMethodField()
+    create_by_name = serializers.CharField(source='create_by.name', read_only=True)
 
     class Meta:
         model = Ticket
