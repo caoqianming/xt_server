@@ -36,10 +36,13 @@ class TicketMixin:
 
     def perform_update(self, serializer):
         ins = serializer.save()
+        ruser = self.request.user
         if ins.ticket and self.ticket_auto_submit_on_update:
             source_state:State = ins.ticket.state
             if source_state.type != State.STATE_TYPE_START:
                 raise ParseError('该工单已开始流转,不可修改')
+            if ruser != ins.ticket.create_by:
+                raise ParseError('非工单创建人不可修改')
             transition = WfService.get_state_transitions(source_state).first()
             ticket_data = self.gen_ticket_data(ins)
             WfService.handle_ticket(ticket=ins.ticket, transition=transition, new_ticket_data=ticket_data, 
