@@ -21,7 +21,7 @@ class TicketMixin:
         return True
     
     def gen_ticket_data(self, instance):
-        ticket_data = {"t_model": instance.__class__.__name__, "t_id": instance.id}
+        ticket_data = {"t_model": instance.__class__.__name__, "t_id": str(instance.id)}
         if self.ticket_data_save_fields:
             for field in self.ticket_data_save_fields:
                 if '.' in field:
