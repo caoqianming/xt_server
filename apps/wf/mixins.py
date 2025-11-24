@@ -12,6 +12,7 @@ class TicketMixin:
     """
     workflow_key = None
     ticket_auto_submit_on_update = True
+    ticket_auto_submit_on_create = True
     ticket_data_save_fields = []
 
     def get_workflow_key(self, instance):
@@ -61,16 +62,22 @@ class TicketMixin:
                 raise ParseError(f'工作流{workflow_key}异常:{e}')
             
             # 开始创建工单
-            source_state: State = WfService.get_workflow_start_state(wf)
-            transitions = WfService.get_state_transitions(source_state)
-            if transitions.count() == 1:
-                transition = transitions.first()
-                ticket_data = self.gen_ticket_data(ins)
-                WfService.handle_ticket(ticket=None, transition=transition, new_ticket_data=ticket_data, 
-                                        handler=handler, oinfo=self.request.data)
+            if self.ticket_auto_submit_on_create is False:
+               transition = None
             else:
-                raise ParseError(f'工作流{workflow_key}异常:有多个后续状态;不可处理')
+                source_state: State = WfService.get_workflow_start_state(wf)
+                transitions = WfService.get_state_transitions(source_state)
+                if transitions.count() == 1:
+                    transition = transitions.first()
+                else:
+                    raise ParseError(f'工作流{workflow_key}异常:有多个或无后续状态;不可处理')
 
+            ticket_data = self.gen_ticket_data(ins)
+            ticket = WfService.handle_ticket(ticket=None, transition=transition, workflow=wf, new_ticket_data=ticket_data, 
+                                    handler=handler, oinfo=self.request.data)
+            ins.ticket = ticket
+            ins.save(update_fields=['ticket'])
+            
     def perform_destroy(self, instance):
         ticket = instance.ticket
         if ticket and ticket.state.type != State.STATE_TYPE_START:
