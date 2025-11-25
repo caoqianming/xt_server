@@ -108,7 +108,7 @@ class CustomGenericViewSet(MyLoggingMixin, GenericViewSet):
             
             try:
                 obj = queryset.get(**filter_kwargs)
-                l_obj = queryset.model.objects.select_for_update().get(pk=obj.pk)
+                l_obj = queryset.model._base_manager.select_for_update().get(pk=obj.pk)
                 self.check_object_permissions(self.request, l_obj)
                 return l_obj
                         
