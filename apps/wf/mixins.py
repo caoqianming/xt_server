@@ -44,10 +44,13 @@ class TicketMixin:
                 raise ParseError('该工单已开始流转,不可修改')
             if ruser != ins.ticket.create_by:
                 raise ParseError('非工单创建人不可修改')
-            transition = WfService.get_state_transitions(source_state).first()
-            ticket_data = self.gen_ticket_data(ins)
-            WfService.handle_ticket(ticket=ins.ticket, transition=transition, new_ticket_data=ticket_data, 
-                                    handler=self.request.user, oinfo=self.request.data)
+            transitions = WfService.get_state_transitions(source_state)
+            if transitions.count() == 1:
+                ticket_data = self.gen_ticket_data(ins)
+                WfService.handle_ticket(ticket=ins.ticket, transition=transition, new_ticket_data=ticket_data, 
+                                        handler=self.request.user, oinfo=self.request.data)
+            else:
+                raise ParseError('有多个或无后续状态;不可处理')
     
     def perform_create(self, serializer):
         ins = serializer.save()
@@ -62,21 +65,21 @@ class TicketMixin:
                 raise ParseError(f'工作流{workflow_key}异常:{e}')
             
             # 开始创建工单
-            if self.ticket_auto_submit_on_create is False:
-               transition = None
-            else:
+            ticket_data = self.gen_ticket_data(ins)
+            ticket = WfService.handle_ticket(ticket=None, transition=None, workflow=wf, new_ticket_data=ticket_data, 
+                                handler=handler, oinfo=self.request.data)
+            ins.ticket = ticket
+            ins.save(update_fields=['ticket'])
+
+            if self.ticket_auto_submit_on_create:
                 source_state: State = WfService.get_workflow_start_state(wf)
                 transitions = WfService.get_state_transitions(source_state)
                 if transitions.count() == 1:
                     transition = transitions.first()
+                    WfService.handle_ticket(ticket=ticket, transition=transition, new_ticket_data=ticket_data, 
+                                    handler=handler, oinfo=self.request.data)
                 else:
                     raise ParseError(f'工作流{workflow_key}异常:有多个或无后续状态;不可处理')
-
-            ticket_data = self.gen_ticket_data(ins)
-            ticket = WfService.handle_ticket(ticket=None, transition=transition, workflow=wf, new_ticket_data=ticket_data, 
-                                    handler=handler, oinfo=self.request.data)
-            ins.ticket = ticket
-            ins.save(update_fields=['ticket'])
             
     def perform_destroy(self, instance):
         ticket = instance.ticket
