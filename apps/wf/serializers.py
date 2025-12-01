@@ -94,7 +94,7 @@ class TicketSimpleSerializer(CustomModelSerializer):
 
 
 class TicketCreateSerializer(CustomModelSerializer):
-    transition = serializers.PrimaryKeyRelatedField(queryset=Transition.objects.all(), write_only=True)
+    transition = serializers.PrimaryKeyRelatedField(queryset=Transition.objects.all(), write_only=True, allow_null=True, required=False)
     title = serializers.CharField(allow_blank=True, required=False)
 
     class Meta:
