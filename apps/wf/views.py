@@ -254,7 +254,7 @@ class TicketViewSet(CreateUpdateCustomMixin, CreateModelMixin, ListModelMixin, R
         serializer = self.get_serializer(data=rdata)
         serializer.is_valid(raise_exception=True)
         vdata = serializer.validated_data  # 校验之后的数据
-        transition = vdata['transition']
+        transition = vdata.get("transition", None)
         workflow = vdata['workflow']
         ticket_data = vdata['ticket_data']
         ticket = WfService.handle_ticket(ticket=None, transition=transition, 
