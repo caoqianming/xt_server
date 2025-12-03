@@ -8,6 +8,7 @@ from django.db import IntegrityError
 from django.db import transaction
 from rest_framework.exceptions import ParseError
 from django.core.cache import cache
+from django.db import transaction, connection
 import hashlib
 
 # 自定义软删除查询基类
@@ -115,27 +116,39 @@ class BaseModel(models.Model):
 
     @classmethod
     def safe_get_or_create(cls, defaults=None, **kwargs):
+        """
+        多进程/多服务器安全的 get_or_create
+        - 数据库唯一约束不够时，用 Redis 锁防止重复创建
+        - 在事务中使用 select_for_update
+        """
         defaults = defaults or {}
-        
+        create_kwargs = {**kwargs, **defaults}
+
         for attempt in range(3):
-                try:
-                    # 先尝试获取（带锁）
+            try:
+                if connection.in_atomic_block:
+                    # 在事务中，先锁定再获取
                     try:
                         obj = cls.objects.select_for_update().get(**kwargs)
                         return obj, False
                     except cls.DoesNotExist:
-                        # 不存在则创建
-                        obj = cls(**kwargs, **defaults)
+                        obj = cls(**create_kwargs)
                         obj.save()
                         return obj, True
-                except IntegrityError:
-                    # 发生唯一约束冲突时重试
-                    if attempt == 2:
-                        raise
-                    time.sleep(0.1 * (attempt + 1))
-                except Exception:
-                    # 其他异常直接抛出
+                else:
+                    # 非事务，使用分布式锁
+                    sorted_kwargs = dict(sorted(create_kwargs.items()))
+                    lock_hash = hashlib.md5(str(sorted_kwargs).encode()).hexdigest()
+                    lock_key = f"safe_get_or_create:{cls.__name__}:{lock_hash}"
+
+                    with cache.lock(lock_key, timeout=10):
+                        return cls.objects.get_or_create(**kwargs, defaults=defaults)
+
+            except IntegrityError:
+                # 唯一约束冲突，重试
+                if attempt == 2:
                     raise
+                time.sleep(0.1 * (attempt + 1))
         
         
     def handle_parent(self):
