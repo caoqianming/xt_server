@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin, \
     RetrieveModelMixin, UpdateModelMixin
 from apps.wf.serializers import CustomFieldCreateUpdateSerializer, CustomFieldSerializer, StateSerializer, \
-    TicketAddNodeEndSerializer, TicketAddNodeSerializer, TicketCloseSerializer, \
+    StateDetailSerializer, TicketAddNodeEndSerializer, TicketAddNodeSerializer, TicketCloseSerializer, \
     TicketCreateSerializer, TicketDeliverSerializer, TicketDestorySerializer, TicketFlowSerializer, \
     TicketHandleSerializer, TicketRetreatSerializer, \
     TicketSerializer, TransitionSerializer, WorkflowSerializer, \
@@ -185,6 +185,7 @@ class StateViewSet(CreateModelMixin, UpdateModelMixin, RetrieveModelMixin, Destr
                  'put': 'workflow.update', 'delete': 'workflow.update'}
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    retrieve_serializer_class = StateDetailSerializer
     search_fields = ['name']
     filterset_fields = ['workflow']
     ordering = ['sort']

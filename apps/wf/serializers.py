@@ -1,5 +1,5 @@
-from apps.system.models import Dept, User
-from apps.system.serializers import UserSignatureSerializer, UserSimpleSerializer
+from apps.system.models import Dept, User, Post, Role
+from apps.system.serializers import UserSignatureSerializer, UserSimpleSerializer, DeptSimpleSerializer, PostSimpleSerializer, RoleSimpleSerializer
 from rest_framework import serializers
 from apps.utils.serializers import CustomModelSerializer
 
@@ -23,6 +23,20 @@ class StateSerializer(CustomModelSerializer):
         model = State
         fields = '__all__'
 
+class StateDetailSerializer(StateSerializer):
+    participant_ = serializers.SerializerMethodField()
+
+    def get_participant_(self, obj:State):
+        if obj.participant_type == State.PARTICIPANT_TYPE_PERSONAL:
+            return UserSimpleSerializer(instance=User.objects.get(id=obj.participant)).data
+        elif obj.participant_type == State.PARTICIPANT_TYPE_MULTI:
+            return UserSimpleSerializer(instance=User.objects.filter(id__in=obj.participant), many=True).data
+        elif obj.participant_type == State.PARTICIPANT_TYPE_DEPT:
+            return DeptSimpleSerializer(instance=Dept.objects.filter(id__in=obj.participant), many=True).data
+        elif obj.participant_type == State.PARTICIPANT_TYPE_POST:
+            return PostSimpleSerializer(instance=Post.objects.filter(id__in=obj.participant), many=True).data
+        elif obj.participant_type == State.PARTICIPANT_TYPE_ROLE:
+            return RoleSimpleSerializer(instance=Role.objects.filter(id__in=obj.participant), many=True).data
 
 class WorkflowSimpleSerializer(CustomModelSerializer):
     class Meta:
