@@ -184,7 +184,15 @@ class WfService(object):
                     dpt_attrs = state.filter_dept.split('.')  # 通过反向查询得到可能有多层
                     expr = ticket
                     for i in dpt_attrs:
-                        expr = getattr(expr, i)
+                        try:
+                            expr = getattr(expr, i)
+                        except AttributeError as e:
+                            if "'RelatedManager' object has no attribute" in str(e):
+                                expr = getattr(expr.first(), i)
+                            else:
+                                raise
+                    if expr is None:
+                        raise ParseError('未找到对应部门')
                     dpts = Dept.objects.filter(id=expr.id)
                 user_queryset = user_queryset.filter(depts__in=dpts)
             # if state.filter_policy == 1:
