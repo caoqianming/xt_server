@@ -20,7 +20,7 @@ from apps.utils.mixins import CreateUpdateCustomMixin, CreateUpdateModelAMixin
 from apps.wf.services import WfService
 from rest_framework.exceptions import ParseError, NotFound
 from rest_framework import status
-from django.db.models import Count
+from django.db.models import Count, Case, When, IntegerField, F
 from rest_framework.serializers import Serializer
 from apps.utils.snowflake import idWorker
 import importlib
@@ -178,6 +178,20 @@ class WorkflowViewSet(CustomModelViewSet):
             tr.condition_expression = ce
             tr.save()
         return Response()
+    
+    @action(methods=['get'], detail=False, perms_map={'get': '*'})
+    def ticket_count(self, request, pk=None):
+        """工作流下的工单数量统计
+
+        工作流下的工单数量统计
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        result = Ticket.objects.filter(workflow__in=queryset).annotate(workflow_name=F('workflow__name')).values(
+            'workflow', 'workflow_name').annotate(
+            count_done=Count(Case(When(state__type=2, then=1), output_field=IntegerField())),
+            count_processing=Count(Case(When(state__type=1, then=1), output_field=IntegerField())),
+        )
+        return Response(list(result))
 
 
 class StateViewSet(CreateModelMixin, UpdateModelMixin, RetrieveModelMixin, DestroyModelMixin, CustomGenericViewSet):
