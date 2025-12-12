@@ -186,8 +186,9 @@ class WorkflowViewSet(CustomModelViewSet):
         工作流下的工单数量统计
         """
         queryset = self.filter_queryset(self.get_queryset())
-        result = Ticket.objects.filter(workflow__in=queryset).annotate(workflow_name=F('workflow__name')).values(
-            'workflow', 'workflow_name').annotate(
+        result = Ticket.objects.filter(workflow__in=queryset).annotate(
+            workflow_name=F('workflow__name'), workflow_cate=F('workflow__cate')).values(
+            'workflow', 'workflow_name', 'workflow_cate').annotate(
             count_done=Count(Case(When(state__type=2, then=1), output_field=IntegerField())),
             count_processing=Count(Case(When(state__type=1, then=1), output_field=IntegerField())),
         )
