@@ -13,7 +13,6 @@ class TicketMixin:
     workflow_key = None
     ticket_auto_submit_on_update = True
     ticket_auto_submit_on_create = True
-    ticket_data_save_fields = []
 
     def get_workflow_key(self, instance):
         return self.workflow_key
@@ -21,18 +20,14 @@ class TicketMixin:
     def should_create_ticket(self, instance):
         return True
     
+    def gen_other_ticket_data(self, instance):
+        return {}
+        
     def gen_ticket_data(self, instance):
         ticket_data = {"t_model": instance.__class__.__name__, "t_id": str(instance.id)}
-        if self.ticket_data_save_fields:
-            for field in self.ticket_data_save_fields:
-                if '.' in field:
-                    attr_list  = field.split('.')
-                    expr = instance
-                    for a in attr_list:
-                        expr = getattr(expr, a)
-                    ticket_data[field] = expr
-                else:
-                    ticket_data[field] = getattr(instance, field)
+        other_data = self.gen_other_ticket_data(instance)
+        if other_data:
+            ticket_data.update(other_data)
         return ticket_data
 
     def perform_update(self, serializer):
