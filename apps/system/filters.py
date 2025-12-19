@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 from .models import Dept, User
-from apps.utils.queryset import get_child_queryset_u
+from apps.utils.queryset import get_child_queryset2
 from rest_framework.exceptions import ParseError
 
 
@@ -25,11 +25,17 @@ class UserFilterSet(filters.FilterSet):
         }
     
     def filter_ubelong_dept__name(self, queryset, name, value):
-        depts = get_child_queryset_u(Dept.objects.filter(name=value))
+        try:
+            depts = get_child_queryset2(Dept.objects.get(name=value))
+        except Exception as e:
+            raise ParseError(f"部门名称错误: {value} {str(e)}")
         return queryset.filter(belong_dept__in=depts)
     
     def filter_ubelong_dept(self, queryset, name, value):
-        depts = get_child_queryset_u(Dept.objects.filter(id=value))
+        try:
+            depts = get_child_queryset2(Dept.objects.get(id=value))
+        except Exception as e:
+            raise ParseError(f"部门ID错误: {value} {str(e)}")
         return queryset.filter(belong_dept__in=depts)
 
 
