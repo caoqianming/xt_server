@@ -1,8 +1,12 @@
 from django_filters import rest_framework as filters
 from .models import Dept, User
+from apps.utils.queryset import get_child_queryset_u
+from rest_framework.exceptions import ParseError
 
 
 class UserFilterSet(filters.FilterSet):
+    ubelong_dept__name = filters.CharFilter(label='归属于该部门及以下(按名称)', method='filter_ubelong_dept__name')
+    ubelong_dept = filters.CharFilter(label='归属于该部门及以下', method='filter_ubelong_dept')
 
     class Meta:
         model = User
@@ -19,6 +23,14 @@ class UserFilterSet(filters.FilterSet):
             'posts__name': ["exact", "contains"],
             'posts__code': ["exact", "contains"], 
         }
+    
+    def filter_ubelong_dept__name(self, queryset, name, value):
+        depts = get_child_queryset_u(Dept.objects.filter(name=value))
+        return queryset.filter(belong_dept__in=depts)
+    
+    def filter_ubelong_dept(self, queryset, name, value):
+        depts = get_child_queryset_u(Dept.objects.filter(id=value))
+        return queryset.filter(belong_dept__in=depts)
 
 
 class DeptFilterSet(filters.FilterSet):
