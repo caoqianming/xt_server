@@ -11,7 +11,7 @@ import random
 from apps.utils.queryset import get_parent_queryset
 from apps.wf.tasks import run_task
 from rest_framework.exceptions import ParseError
-
+import time
 
 class WfService(object):
     @staticmethod
@@ -335,6 +335,15 @@ class WfService(object):
                             act_state=Ticket.TICKET_ACT_STATE_DRAFT,
                             belong_dept=handler.belong_dept,
                             ticket_data=save_ticket_data, participant_type=1, participant=handler.id)  # 先创建出来
+           
+            sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
+            ticket.sn = sn
+            ticket.save()
+            if not transition:
+                return ticket
+            just_created = True  # 刚创建的工单不需要校验权限
+
+        if transition and transition.source_state.type == State.STATE_TYPE_START:
             # 更新title和sn
             ticket_title = oinfo.get("title", "")
             title_template = ticket.workflow.title_template
@@ -344,13 +353,8 @@ class WfService(object):
                     ticket_title = title_template.format(**all_ticket_data)
                 except KeyError as e:
                     raise ParseError(f"工单标题模板中存在未定义的变量:{e}")
-            sn = WfService.get_ticket_sn(ticket.workflow)  # 流水号
-            ticket.sn = sn
             ticket.title = ticket_title
-            ticket.save()
-            if not transition:
-                return ticket
-            just_created = True  # 刚创建的工单不需要校验权限
+            ticket.save(update_fields=["title"])
 
         source_state = ticket.state
         source_ticket_data = ticket.ticket_data
@@ -502,7 +506,7 @@ class WfService(object):
     @classmethod
     def send_ticket_notice(cls, ticketflow:TicketFlow):
         # 根据ticketflow发送通知
-        Thread(target=send_ticket_notice_t, args=(ticketflow,), daemon=True).start()
+        Thread(target=send_ticket_notice_t, args=(ticketflow.id,), daemon=True).start()
 
 
     @classmethod
@@ -538,11 +542,12 @@ class WfService(object):
                                   participant=handler, transition=None)
         cls.task_ticket(ticket=ticket)
 
-def send_ticket_notice_t(ticketflow: TicketFlow):
+def send_ticket_notice_t(ticketflowId: str):
     """
     发送通知
     """
-    ticket = ticketflow.ticket
+    time.sleep(3)
+    ticket = TicketFlow.objects.get(id=ticketflowId).ticket
     params = {'workflow': ticket.workflow.name, 'state': ticket.state.name}
     if ticket.participant_type == 1:
         # 发送短信通知
