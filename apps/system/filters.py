@@ -45,5 +45,6 @@ class DeptFilterSet(filters.FilterSet):
         model = Dept
         fields = {
             'type': ['exact', 'in'],
-            'name': ['exact', 'in', 'contains']
+            'name': ['exact', 'in', 'contains'],
+            "parent": ['exact', 'isnull'],
         }
