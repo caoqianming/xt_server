@@ -150,7 +150,32 @@ class BaseModel(models.Model):
                     raise
                 time.sleep(0.1 * (attempt + 1))
         
-        
+    
+    @classmethod
+    def locked_get_or_create(cls, defaults: dict, **kwargs):
+        """
+        仅用于事务内
+        并发安全的 get_or_create
+        """
+        if not connection.in_atomic_block:
+            raise RuntimeError("locked_get_or_create 必须在事务中调用")
+
+        defaults = defaults or {}
+
+        qs = cls.objects.select_for_update().filter(**kwargs)
+
+        cnt = qs.count()
+        if cnt > 1:
+            raise RuntimeError(
+                f"{cls.__name__} 数据异常：定位条件 {kwargs} 命中 {cnt} 条"
+            )
+
+        if cnt == 1:
+            return qs.get(), False
+
+        obj = cls.objects.create(**kwargs, **defaults)
+        return obj, True
+
     def handle_parent(self):
         pass
 
