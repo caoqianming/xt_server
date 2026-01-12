@@ -173,7 +173,8 @@ class BaseModel(models.Model):
         if cnt == 1:
             return qs.get(), False
 
-        obj = cls.objects.create(**kwargs, **defaults)
+        params = {**kwargs, **defaults}
+        obj = cls.objects.create(**params)
         return obj, True
 
     def handle_parent(self):
