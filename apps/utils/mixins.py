@@ -300,7 +300,10 @@ class ComplexQueryMixin:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(new_qs, many=True)
-        return Response(serializer.data)
+        rdata = serializer.data
+        if hasattr(self, 'add_info_for_list'):
+            rdata = self.add_info_for_list(rdata)
+        return Response(rdata)
     
 class MyLoggingMixin(object):
     """Mixin to log requests"""
