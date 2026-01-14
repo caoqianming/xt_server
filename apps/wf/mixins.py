@@ -41,6 +41,7 @@ class TicketMixin:
                 raise ParseError('非工单创建人不可修改')
             transitions = WfService.get_state_transitions(source_state)
             if transitions.count() == 1:
+                transition = transitions.first()
                 ticket_data = self.gen_ticket_data(ins)
                 WfService.handle_ticket(ticket=ins.ticket, transition=transition, new_ticket_data=ticket_data, 
                                         handler=self.request.user, oinfo=self.request.data)
