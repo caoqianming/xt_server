@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('wf', '0004_workflow_view_path2'),
+        ('wf', '0003_workflow_view_path'),
     ]
 
     operations = [

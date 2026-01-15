@@ -1,4 +1,3 @@
-
 import json
 import logging
 from server.settings import get_sysconfig

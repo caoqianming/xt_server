@@ -1,4 +1,3 @@
-from aip import AipSpeech
 from django.conf import settings
 import uuid
 import os
@@ -17,6 +16,7 @@ def generate_voice(msg: str, per: int = 0):
         str: 地址
         dict: result
     """
+    from aip import AipSpeech
     client = AipSpeech(settings.BD_SP_ID, settings.BD_SP_KEY, settings.BD_SP_SECRET)
     result = client.synthesis(msg, 'zh', 1, {'vol': 5, 'spd': 5, 'per': per})
     # 识别正确返回语音二进制 错误则返回dict 参照下面错误码

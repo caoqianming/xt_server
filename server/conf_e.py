@@ -14,7 +14,12 @@ EMAIL_USE_TLS = True
 
 
 # 数据库配置
-CACHE_LOCATION = "redis://127.0.0.1:6379/2"
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/2',  # Redis URL
+    }
+}
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/3"
 CELERY_TASK_DEFAULT_QUEUE = BASE_PROJECT_CODE
 DEBUG = True
@@ -31,11 +36,6 @@ DATABASES = {
 
 # 雪花ID
 SNOW_DATACENTER_ID = 1
-
-# 百度语音
-BD_SP_ID = 'xx'
-BD_SP_KEY = 'xx'
-BD_SP_SECRET = 'xx'
 
 # 运维相关
 SD_PWD = 'xx'
