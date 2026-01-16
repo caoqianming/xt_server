@@ -19,6 +19,7 @@ from rest_framework.decorators import action
 from apps.utils.serializers import ComplexSerializer
 from django.db.models import F
 from django.db import transaction
+from django.core.files.uploadedfile import UploadedFile
 
 # 实例化myLogger
 myLogger = logging.getLogger('log')
@@ -494,6 +495,14 @@ class MyLoggingMixin(object):
         if isinstance(data, list):
             return [self._clean_data(d) for d in data]
 
+        # Uploaded files: convert to metadata so JSON serialization won't fail
+        if isinstance(data, UploadedFile):
+            return {
+                "filename": getattr(data, "name", None),
+                "content_type": getattr(data, "content_type", None),
+                "size": getattr(data, "size", None),
+            }
+
         if isinstance(data, dict):
             SENSITIVE_FIELDS = {
                 "api",
@@ -511,12 +520,28 @@ class MyLoggingMixin(object):
                 }
 
             for key, value in data.items():
+                # convert uploaded files in dict values
+                if isinstance(value, UploadedFile):
+                    data[key] = {
+                        "filename": getattr(value, "name", None),
+                        "content_type": getattr(value, "content_type", None),
+                        "size": getattr(value, "size", None),
+                    }
+                    continue
                 try:
                     value = ast.literal_eval(value)
-                except (ValueError, SyntaxError):
+                except (ValueError, SyntaxError, TypeError):
                     pass
                 if isinstance(value, (list, dict)):
                     data[key] = self._clean_data(value)
                 if key.lower() in SENSITIVE_FIELDS:
                     data[key] = self.CLEANED_SUBSTITUTE
+        # Fallback: ensure returned data is JSON-serializable by converting
+        # unknown object types to strings
+        if not isinstance(data, (dict, list, str, int, float, bool, type(None))):
+            try:
+                return str(data)
+            except Exception:
+                return None
+
         return data
