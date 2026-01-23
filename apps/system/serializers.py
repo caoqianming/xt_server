@@ -320,7 +320,7 @@ def phone_exist(phone):
 
 
 def user_exist(username):
-    if User.objects.filter(username=username).exists():
+    if User.objects.get_queryset(all=True).filter(username=username).exists():
         raise serializers.ValidationError(**USERNAME_EXIST)
     return username
 
