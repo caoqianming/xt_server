@@ -54,7 +54,7 @@ class Dept(ParentModel, CommonAModel):
     name = models.CharField('名称', max_length=60)
     type = models.CharField('类型', max_length=20, default='dept')
     sort = models.PositiveSmallIntegerField('排序标记', default=1)
-    third_info = models.JSONField('三方系统信息', default=dict)
+    third_info = models.JSONField('三方系统信息', default=dict, blank=True)
 
     class Meta:
         verbose_name = '部门'
@@ -109,9 +109,9 @@ class PostRole(BaseModel):
     data_range = models.PositiveSmallIntegerField('数据权限范围', choices=DataFilter.choices,
                                                   default=DataFilter.THISLEVEL_AND_BELOW)
     post = models.ForeignKey(Post, verbose_name='关联岗位',
-                             on_delete=models.CASCADE)
+                             on_delete=models.CASCADE, related_name="pr_post")
     role = models.ForeignKey(Role, verbose_name='关联角色',
-                             on_delete=models.CASCADE)
+                             on_delete=models.CASCADE, related_name='pr_role')
 
 
 class SoftDeletableUserManager(SoftDeletableManagerMixin, UserManager):
@@ -134,7 +134,7 @@ class User(AbstractUser, CommonBModel):
     posts = models.ManyToManyField(
         Post, through='system.userpost', related_name='user_posts')
     depts = models.ManyToManyField(Dept, through='system.userpost')
-    roles = models.ManyToManyField(Role, verbose_name='关联角色')
+    roles = models.ManyToManyField(Role, verbose_name='关联角色', blank=True)
 
     # 关联账号
     secret = models.CharField('密钥', max_length=100, null=True, blank=True)

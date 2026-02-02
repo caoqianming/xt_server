@@ -299,7 +299,10 @@ class ComplexQueryMixin:
         page = self.paginate_queryset(new_qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            rdata = serializer.data
+            if hasattr(self, 'add_info_for_list'):
+                rdata = self.add_info_for_list(rdata)
+            return self.get_paginated_response(rdata)
         serializer = self.get_serializer(new_qs, many=True)
         rdata = serializer.data
         if hasattr(self, 'add_info_for_list'):

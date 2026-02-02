@@ -7,6 +7,7 @@ from rest_framework.exceptions import ParseError
 class UserFilterSet(filters.FilterSet):
     ubelong_dept__name = filters.CharFilter(label='归属于该部门及以下(按名称)', method='filter_ubelong_dept__name')
     ubelong_dept = filters.CharFilter(label='归属于该部门及以下', method='filter_ubelong_dept')
+    has_perm = filters.CharFilter(label='拥有指定权限标识', method='filter_has_perm')
 
     class Meta:
         model = User
@@ -37,6 +38,9 @@ class UserFilterSet(filters.FilterSet):
         except Exception as e:
             raise ParseError(f"部门ID错误: {value} {str(e)}")
         return queryset.filter(belong_dept__in=depts)
+    
+    def filter_has_perm(self, queryset, name, value):
+        return queryset.filter(up_user__post__pr_post__role__perms__codes__contains=value)
 
 
 class DeptFilterSet(filters.FilterSet):

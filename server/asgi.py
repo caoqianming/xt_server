@@ -11,6 +11,7 @@ import os
 import django
 from channels.routing import ProtocolTypeRouter, URLRouter
 
+# This is needed for Django to work properly.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
 django.setup()
 
