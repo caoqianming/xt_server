@@ -6,8 +6,8 @@ django-cors-headers==4.9.0
 django-filter==23.5
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
-drf-yasg==1.21.7
-psutil==5.9.0
+drf-yasg==1.21.8
+psutil==7.0.0
 redis==7.1.0
 django-redis==6.0.0
 user-agents==2.2.0
