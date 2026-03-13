@@ -83,6 +83,7 @@ class ComplexSerializer(serializers.Serializer):
     page = serializers.IntegerField(min_value=0, required=False)
     page_size = serializers.IntegerField(min_value=1, required=False)
     ordering = serializers.CharField(required=False)
+    distinct = serializers.BooleanField(required=False, default=True, label="是否按主键去重")
     querys = serializers.ListField(child=QuerySerializer(
         many=True), label="查询列表", required=False)
     annotate_field_list = serializers.ListField(child=serializers.CharField(), label="RawSQL字段列表", required=False)

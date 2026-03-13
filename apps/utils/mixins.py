@@ -251,6 +251,7 @@ class ComplexQueryMixin:
         queryset = self.get_queryset()
         querys = vdata.get('querys', [])
         annotate_field_list = vdata.get('annotate_field_list', [])
+        distinct = vdata.get('distinct', True)
 
         if not querys:
             new_qs = queryset
@@ -273,6 +274,11 @@ class ComplexQueryMixin:
                     new_qs = new_qs | one_qs
             except Exception as e:
                 raise ParseError(str(e))
+
+        # 反向关联(右到左)查询容易因 JOIN 膨胀产生重复行，这里按主键回查去重
+        if distinct:
+            pk_name = queryset.model._meta.pk.attname
+            new_qs = queryset.filter(**{f"{pk_name}__in": new_qs.values(pk_name)})
         
         if annotate_field_list:
             annotate_dict = getattr(self, "annotate_dict", {})
