@@ -391,6 +391,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
         """
         with_photos = request.query_params.get("with_photos", "no") == "yes"
         field_data = ['一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人', '创建时间']
+        field_data.insert(3, AtaskIssue._meta.get_field("note").verbose_name)
         if with_photos:
             field_data.insert(0, "采用标准")
             field_data.insert(0, "审计对象")
@@ -417,6 +418,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
                      i['level_10_name'],
                     i.get('standarditem_number', None),
                     i['content'],
+                    i.get('note', None),
                     R_LEVEL_DICT.get(i["risk_level"], None),
                     i["kill_score"],
                     i["create_by_name"], i["create_time"],
@@ -427,12 +429,13 @@ class AtaskIssueViewSet(CustomModelViewSet):
                     [i['level_10_name'],
                     i.get('standarditem_number', None),
                     i['content'],
+                    i.get('note', None),
                     R_LEVEL_DICT.get(i["risk_level"], None),
                     i["kill_score"],
                     i["create_by_name"], i["create_time"]]
                 )
         if with_photos:
-            path = export_excel(field_data, data, '问题清单', img_field_index=[9, 10])
+            path = export_excel(field_data, data, '问题清单', img_field_index=[10, 11])
         else:
             path = export_excel(field_data, data, '问题清单')
         return Response({'path': path})
