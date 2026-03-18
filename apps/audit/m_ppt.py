@@ -8,6 +8,7 @@ from pptx.util import Pt
 from PIL import Image
 from apps.system.models import User
 from apps.utils.permission import has_perm
+from apps.utils.img import ensure_small_image, get_media_abs_path
 from rest_framework.exceptions import ParseError
 from .models import R_LEVEL_DICT
 from io import BytesIO
@@ -53,8 +54,6 @@ def add_image_to_slide(slide, image_path, left, top, width=None, height=None):
 def process_image(img_path, issueId):
     """处理单张图片并返回BytesIO和宽高比"""
     with Image.open(img_path) as img:
-        # 压缩图片逻辑（可选）
-        img.thumbnail((1600, 1600))  # 限制最大尺寸
         buffer = BytesIO()
         if img.mode == 'RGBA':
             img = img.convert('RGB')
@@ -110,7 +109,7 @@ def export_pptx(atask:Atask, FileName:str, user:User):
         futures = []
         for issue in issues:
             for photo in issue.photos.all()[:3]:  # 限制每issue最多3张
-                img_path = BASE_DIR + photo.path
+                img_path = get_media_abs_path(ensure_small_image(photo) or photo.path)
                 futures.append(executor.submit(process_image, img_path, issue.id))
         
         for future in futures:

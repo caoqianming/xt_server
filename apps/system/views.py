@@ -20,6 +20,7 @@ from apps.system.errors import OLD_PASSWORD_WRONG, PASSWORD_NOT_SAME, SCHEDULE_W
 from apps.system.filters import DeptFilterSet, UserFilterSet
 # from django_q.models import Task as QTask, Schedule as QSchedule
 from apps.utils.mixins import (CustomCreateModelMixin, MyLoggingMixin)
+from apps.utils.img import ensure_small_image
 from django.conf import settings
 from apps.utils.permission import ALL_PERMS
 from apps.utils.viewsets import CustomGenericViewSet, CustomModelViewSet
@@ -598,7 +599,11 @@ class FileViewSet(CustomCreateModelMixin, RetrieveModelMixin, ListModelMixin, Cu
         instance = serializer.save(
             create_by=self.request.user, name=name, size=size, type=file_type, mime=mime)
         instance.path = settings.MEDIA_URL + instance.file.name
-        instance.save()
+        update_fields = ["path"]
+        if file_type == File.FILE_TYPE_PIC:
+            instance.small_path = ensure_small_image(instance)
+            update_fields.append("small_path")
+        instance.save(update_fields=update_fields)
 
 
 class ApkViewSet(MyLoggingMixin, ListModelMixin, CreateModelMixin, GenericViewSet):

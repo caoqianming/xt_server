@@ -241,6 +241,7 @@ class File(CommonAModel):
     type = models.CharField('文件类型', max_length=50,
                             choices=type_choices, default='文档')
     path = models.CharField('地址', max_length=200, null=True, blank=True)
+    small_path = models.CharField('缩略图地址', max_length=200, null=True, blank=True)
 
     class Meta:
         verbose_name = '文件库'
