@@ -15,7 +15,7 @@ from apps.audit.service import daoru_standard, daoru_issue, sendMail
 from django.conf import settings
 from .filters import AtaskItemFilter, AtaskIssueFilter
 from rest_framework import serializers
-from apps.audit.service_2 import export_issue_docx, export_atask_report
+from apps.audit.service_2 import export_issue_docx, export_atask_report, export_issue_images
 from apps.utils.export import export_excel
 from apps.audit.m_ppt import export_pptx
 from apps.utils.permission import has_perm
@@ -210,6 +210,13 @@ class AtaskViewSet(CustomModelViewSet):
         else:
             raise ParseError("仅组长可操作")
         return Response({'path': export_atask_report(ins)})
+
+    @action(methods=['get'], detail=True, perms_map={'get': '*'},
+            serializer_class=serializers.Serializer)
+    def export_images(self, request, pk=None):
+        """导出图片zip"""
+        ins:Atask = self.get_object()
+        return Response({'path': export_issue_images(ins, request.user)})
 
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}

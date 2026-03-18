@@ -1,12 +1,16 @@
 from server.settings import BASE_DIR
-from apps.audit.models import Atask, AtaskItem, AtaskIssue, AtaskProblem
+from apps.audit.models import Atask, AtaskItem, AtaskIssue, AtaskProblem, AtaskTeam
 from openpyxl import load_workbook
 import os
 from apps.audit.models import R_LEVEL_DICT, Company
 from docxtpl import DocxTemplate
 import logging
 import re
+import zipfile
 from xml.sax.saxutils import escape
+from apps.utils.img import get_media_abs_path
+from apps.utils.permission import has_perm
+from rest_framework.exceptions import ParseError
 
 myLogger = logging.getLogger('log')
 
@@ -117,6 +121,43 @@ def export_issue_docx(atask:Atask, type=1):
     path = f'/media/temp/任务问题清单_{atask.id}_{type}.docx'
     doc.save(BASE_DIR + path)
     return path
+
+
+def export_issue_images(atask: Atask, user):
+    if has_perm(user, ["atask.update"]):
+        issues = AtaskIssue.objects.filter(atask=atask)
+    elif AtaskTeam.objects.filter(atask=atask, member=user).exists():
+        issues = AtaskIssue.objects.filter(atask=atask, create_by=user)
+    else:
+        raise ParseError("没有导出图片的权限")
+
+    issues = issues.order_by("atask", "standarditem__number_sort", "-create_time").prefetch_related("photos")
+    temp_dir = os.path.join(BASE_DIR, "media", "temp")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    zip_name = f"问题图片_{atask.id}_{user.name}.zip"
+    zip_abs_path = os.path.join(temp_dir, zip_name)
+
+    with zipfile.ZipFile(zip_abs_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for issue in issues:
+            photo = issue.photos.order_by("id").first()
+            if not photo:
+                continue
+
+            media_path = photo.path or getattr(photo, "small_path", "") or ""
+            abs_path = get_media_abs_path(media_path)
+            if not media_path or not os.path.exists(abs_path):
+                fallback_path = getattr(photo, "small_path", "") or ""
+                abs_path = get_media_abs_path(fallback_path)
+                media_path = fallback_path
+            if not media_path or not os.path.exists(abs_path):
+                continue
+
+            _root, ext = os.path.splitext(media_path)
+            ext = ext or ".jpg"
+            zf.write(abs_path, arcname=f"{issue.id}{ext}")
+
+    return f"/media/temp/{zip_name}"
 
 
 def deep_clean(data):
