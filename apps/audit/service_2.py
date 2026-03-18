@@ -8,7 +8,7 @@ import logging
 import re
 import zipfile
 from xml.sax.saxutils import escape
-from apps.utils.img import get_media_abs_path
+from apps.utils.img import ensure_small_image, get_media_abs_path
 from apps.utils.permission import has_perm
 from rest_framework.exceptions import ParseError
 
@@ -144,10 +144,10 @@ def export_issue_images(atask: Atask, user):
             if not photo:
                 continue
 
-            media_path = photo.path or getattr(photo, "small_path", "") or ""
+            media_path = ensure_small_image(photo) or photo.path or ""
             abs_path = get_media_abs_path(media_path)
             if not media_path or not os.path.exists(abs_path):
-                fallback_path = getattr(photo, "small_path", "") or ""
+                fallback_path = getattr(photo, "small_path", "") or photo.path or ""
                 abs_path = get_media_abs_path(fallback_path)
                 media_path = fallback_path
             if not media_path or not os.path.exists(abs_path):
