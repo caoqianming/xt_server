@@ -393,19 +393,19 @@ class AtaskIssueViewSet(CustomModelViewSet):
     @action(methods=['get'], detail=False, perms_map={'get': '*'},
             serializer_class=serializers.Serializer)
     def export_excel(self, request, pk=None):
-        """导出excel
-        导出excel
+        """??excel
+        ??excel
         """
         with_photos = request.query_params.get("with_photos", "no") == "yes"
-        field_data = ['ID', '一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人', '创建时间']
+        field_data = ['ID', '????', '???', '????', AtaskIssue._meta.get_field("note").verbose_name, '????', '????', '???', '????']
         if with_photos:
-            field_data.insert(0, "采用标准")
-            field_data.insert(0, "审计对象")
-            field_data.append('图片1')
-            field_data.append('图片2')
+            field_data.insert(0, "????")
+            field_data.insert(0, "????")
+            field_data.append('??1')
+            field_data.append('??2')
         queryset = self.filter_queryset(self.get_queryset())
         if queryset.count() > 300:
-            raise ParseError('数据量超过300,请筛选后导出')
+            raise ParseError('?????300,??????')
 
         serializer_class = AtaskIssueExportWithImgSerializer if with_photos else AtaskIssueExportSerializer
         odata = serializer_class(queryset, many=True).data
@@ -422,6 +422,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
                     item['level_10_name'],
                     item.get('standarditem_number'),
                     item['content'],
+                    item.get('note'),
                     R_LEVEL_DICT.get(item["risk_level"]),
                     item["kill_score"],
                     item["create_by_name"],
@@ -435,13 +436,14 @@ class AtaskIssueViewSet(CustomModelViewSet):
                     item['level_10_name'],
                     item.get('standarditem_number'),
                     item['content'],
+                    item.get('note'),
                     R_LEVEL_DICT.get(item["risk_level"]),
                     item["kill_score"],
                     item["create_by_name"],
                     item["create_time"],
                 ])
         if with_photos:
-            path = export_excel(field_data, data, '问题清单', img_field_index=[10, 11])
+            path = export_excel(field_data, data, '????', img_field_index=[11, 12])
         else:
-            path = export_excel(field_data, data, '问题清单')
+            path = export_excel(field_data, data, '????')
         return Response({'path': path})
