@@ -15,6 +15,7 @@ from rest_framework.validators import UniqueValidator
 from django.conf import settings
 from django.db.models import Q
 from apps.utils.permission import get_user_perms_map
+from apps.utils.img import ensure_small_image
 # from django_q.models import Task as QTask, Schedule as QSchedule
 
 
@@ -101,6 +102,12 @@ class PTaskResultSerializer(CustomModelSerializer):
 
 
 class FileSerializer(CustomModelSerializer):
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if str(getattr(instance, "type", "")) == str(File.FILE_TYPE_PIC) and not ret.get("small_path"):
+            ret["small_path"] = ensure_small_image(instance)
+        return ret
+
     class Meta:
         model = File
         fields = "__all__"
