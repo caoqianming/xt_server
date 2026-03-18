@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../safe_audit_web"
+		}
+	],
+	"settings": {}
+}
