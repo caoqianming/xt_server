@@ -390,7 +390,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
         导出excel
         """
         with_photos = request.query_params.get("with_photos", "no") == "yes"
-        field_data = ['一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人', '创建时间']
+        field_data = ['ID', '一级要素', '条款号', '问题描述', '风险等级', '扣分分值', '检查人', '创建时间']
         if with_photos:
             field_data.insert(0, "采用标准")
             field_data.insert(0, "审计对象")
@@ -400,39 +400,41 @@ class AtaskIssueViewSet(CustomModelViewSet):
         if queryset.count() > 300:
             raise ParseError('数据量超过300,请筛选后导出')
 
-        if with_photos:
-            odata = AtaskIssueExportWithImgSerializer(queryset, many=True).data
-        else:
-            odata = AtaskIssueExportSerializer(queryset, many=True).data
-        # 处理数据
+        serializer_class = AtaskIssueExportWithImgSerializer if with_photos else AtaskIssueExportSerializer
+        odata = serializer_class(queryset, many=True).data
         data = []
-        for i in odata:
+        for item in odata:
             if with_photos:
-                photos = i.get("photos_", [])
+                photos = item.get("photos_", [])
                 photo1 = photos[0]["path"] if len(photos) > 0 else None
                 photo2 = photos[1]["path"] if len(photos) > 1 else None
-                data.append(
-                    [i['atask_company_name'],
-                     i['atask_standard_name'],
-                     i['level_10_name'],
-                    i.get('standarditem_number', None),
-                    i['content'],
-                    R_LEVEL_DICT.get(i["risk_level"], None),
-                    i["kill_score"],
-                    i["create_by_name"], i["create_time"],
-                    photo1, photo2]
-                )
+                data.append([
+                    item['atask_company_name'],
+                    item['atask_standard_name'],
+                    item['id'],
+                    item['level_10_name'],
+                    item.get('standarditem_number'),
+                    item['content'],
+                    R_LEVEL_DICT.get(item["risk_level"]),
+                    item["kill_score"],
+                    item["create_by_name"],
+                    item["create_time"],
+                    photo1,
+                    photo2,
+                ])
             else:
-                data.append(
-                    [i['level_10_name'],
-                    i.get('standarditem_number', None),
-                    i['content'],
-                    R_LEVEL_DICT.get(i["risk_level"], None),
-                    i["kill_score"],
-                    i["create_by_name"], i["create_time"]]
-                )
+                data.append([
+                    item['id'],
+                    item['level_10_name'],
+                    item.get('standarditem_number'),
+                    item['content'],
+                    R_LEVEL_DICT.get(item["risk_level"]),
+                    item["kill_score"],
+                    item["create_by_name"],
+                    item["create_time"],
+                ])
         if with_photos:
-            path = export_excel(field_data, data, '问题清单', img_field_index=[9, 10])
+            path = export_excel(field_data, data, '问题清单', img_field_index=[10, 11])
         else:
             path = export_excel(field_data, data, '问题清单')
         return Response({'path': path})

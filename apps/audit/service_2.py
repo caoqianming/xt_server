@@ -85,6 +85,7 @@ def export_issue_docx(atask:Atask, type=1):
         else:
             content = ""
         issues.append({
+            "id": item.id,
             "c": content,
             "n": standarditem.number if standarditem else "",
             # "issue_content": item.content if item.content else "",
