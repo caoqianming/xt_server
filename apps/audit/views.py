@@ -441,11 +441,18 @@ class AtaskIssueViewSet(CustomModelViewSet):
             path = export_excel(field_data, data, '问题清单')
         return Response({'path': path})
 
-    @action(methods=['get'], detail=False, perms_map={'get': '*'},
+    @action(methods=['get', 'post'], detail=False, perms_map={'get': '*', 'post': '*'},
             serializer_class=serializers.Serializer)
     def export_images(self, request, pk=None):
         """导出图片zip"""
-        queryset = self.filter_queryset(self.get_queryset())
+        if request.method == "POST":
+            ids = request.data.get("ids", [])
+            if ids:
+                queryset = self.filter_queryset(self.get_queryset()).filter(id__in=ids)
+            else:
+                queryset = self.queryset.none()
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
         if queryset.count() > 300:
             raise ParseError('数据量超过300,请筛选后导出')
         return Response({'path': export_issue_images(queryset, request.user)})
