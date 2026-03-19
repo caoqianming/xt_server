@@ -211,13 +211,6 @@ class AtaskViewSet(CustomModelViewSet):
             raise ParseError("仅组长可操作")
         return Response({'path': export_atask_report(ins)})
 
-    @action(methods=['get'], detail=True, perms_map={'get': '*'},
-            serializer_class=serializers.Serializer)
-    def export_images(self, request, pk=None):
-        """导出图片zip"""
-        ins:Atask = self.get_object()
-        return Response({'path': export_issue_images(ins, request.user)})
-
 class AtaskTeamViewSet(BulkCreateModelMixin, BulkDestroyModelMixin, CustomGenericViewSet):
     perms_map = {"get": "*", "post": "atask.update", "delete": "atask.update"}
     queryset = AtaskTeam.objects.all()
@@ -447,3 +440,12 @@ class AtaskIssueViewSet(CustomModelViewSet):
         else:
             path = export_excel(field_data, data, '问题清单')
         return Response({'path': path})
+
+    @action(methods=['get'], detail=False, perms_map={'get': '*'},
+            serializer_class=serializers.Serializer)
+    def export_images(self, request, pk=None):
+        """导出图片zip"""
+        queryset = self.filter_queryset(self.get_queryset())
+        if queryset.count() > 300:
+            raise ParseError('数据量超过300,请筛选后导出')
+        return Response({'path': export_issue_images(queryset, request.user)})

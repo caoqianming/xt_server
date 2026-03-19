@@ -1,5 +1,5 @@
 from server.settings import BASE_DIR
-from apps.audit.models import Atask, AtaskItem, AtaskIssue, AtaskProblem, AtaskTeam
+from apps.audit.models import Atask, AtaskItem, AtaskIssue, AtaskProblem
 from openpyxl import load_workbook
 import os
 from apps.audit.models import R_LEVEL_DICT, Company
@@ -7,10 +7,9 @@ from docxtpl import DocxTemplate
 import logging
 import re
 import zipfile
+from datetime import datetime
 from xml.sax.saxutils import escape
 from apps.utils.img import ensure_small_image, get_media_abs_path
-from apps.utils.permission import has_perm
-from rest_framework.exceptions import ParseError
 
 myLogger = logging.getLogger('log')
 
@@ -123,23 +122,22 @@ def export_issue_docx(atask:Atask, type=1):
     return path
 
 
-def export_issue_images(atask: Atask, user):
-    if has_perm(user, ["atask.update"]):
-        issues = AtaskIssue.objects.filter(atask=atask)
-    elif AtaskTeam.objects.filter(atask=atask, member=user).exists():
-        issues = AtaskIssue.objects.filter(atask=atask, create_by=user)
-    else:
-        raise ParseError("没有导出图片的权限")
-
+def export_issue_images(issues, user):
     issues = issues.order_by("atask", "standarditem__number_sort", "-create_time").prefetch_related("photos")
     temp_dir = os.path.join(BASE_DIR, "media", "temp")
     os.makedirs(temp_dir, exist_ok=True)
 
-    zip_name = f"问题图片_{atask.id}_{user.name}.zip"
+    issue_list = list(issues)
+    atask_ids = {issue.atask_id for issue in issue_list}
+    if len(atask_ids) == 1:
+        zip_name = f"问题图片_{next(iter(atask_ids))}_{user.name}.zip"
+    else:
+        now = datetime.now().strftime("%Y%m%d%H%M%S")
+        zip_name = f"问题图片_{user.name}_{now}.zip"
     zip_abs_path = os.path.join(temp_dir, zip_name)
 
     with zipfile.ZipFile(zip_abs_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for issue in issues:
+        for issue in issue_list:
             photo = issue.photos.order_by("id").first()
             if not photo:
                 continue
