@@ -70,7 +70,7 @@ def clear_drf_log(days: int = 7):
     """
     now = timezone.now()
     days7_ago = now - timedelta(days=days)
-    DrfRequestLog.objects.filter(create_time__lte=days7_ago).delete()
+    DrfRequestLog.objects.filter(requested_at__lte=days7_ago).delete()
 
 
 @shared_task(base=CustomTask)
