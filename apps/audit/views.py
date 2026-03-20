@@ -397,7 +397,7 @@ class AtaskIssueViewSet(CustomModelViewSet):
             field_data.append('图片1')
             field_data.append('图片2')
         queryset = self.filter_queryset(self.get_queryset())
-        if queryset.count() > 300:
+        if with_photos and queryset.count() > 300:
             raise ParseError('数据量超过300,请筛选后导出')
 
         serializer_class = AtaskIssueExportWithImgSerializer if with_photos else AtaskIssueExportSerializer
